@@ -39,3 +39,20 @@ exports.makeAllSlotsAvailable = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.generateWeekendSlots = async (req, res, next) => {
+  try {
+    const result = await slotService.generateWeekendSlots({
+      daysAhead: req.body.daysAhead,
+      intervalMinutes: req.body.intervalMinutes,
+    });
+
+    res.json({
+      success: true,
+      message: 'Weekend slots generated successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
