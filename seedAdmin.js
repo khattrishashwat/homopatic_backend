@@ -4,7 +4,12 @@ require('dotenv').config();
 
 const seedAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
+    const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    if (!uri) {
+      throw new Error('MONGO_URI or MONGODB_URI environment variable is required');
+    }
+
+    await mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -20,7 +25,7 @@ const seedAdmin = async () => {
       email: 'admin@yopmail.com',
       phone: '',
       role: 'admin',
-      password: 'Admin@2810', // Note: In production, hash the password
+      password: 'Admin@2810', 
     });
 
     await adminUser.save();

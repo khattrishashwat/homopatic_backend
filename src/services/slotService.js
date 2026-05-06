@@ -68,6 +68,43 @@ const addDays = (date, days) => {
   return result;
 };
 
+const parseTime = (time, name) => {
+  if (!/^\d{2}:\d{2}$/.test(time)) {
+    const error = new Error(`${name} must be in HH:mm format`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [hours, minutes] = time.split(':').map(Number);
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    const error = new Error(`${name} must be a valid 24-hour time`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return { hours, minutes };
+};
+
+const buildDateTime = (date, time, name) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const error = new Error('date must be in YYYY-MM-DD format');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const { hours, minutes } = parseTime(time, name);
+  const dateTime = new Date(`${date}T00:00:00`);
+  dateTime.setHours(hours, minutes, 0, 0);
+
+  if (Number.isNaN(dateTime.getTime())) {
+    const error = new Error('date must be a valid date');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return dateTime;
+};
+
 const ensureWeekendSlot = (startTime) => {
   if (!isWeekend(startTime)) {
     const error = new Error('Slots can only be created for Saturday and Sunday');
@@ -76,8 +113,72 @@ const ensureWeekendSlot = (startTime) => {
   }
 };
 
+const ensureSlotWithinClinicHours = (startTime, endTime) => {
+  const { start, end } = getDayBounds(startTime);
+  if (startTime < start || endTime > end) {
+    const error = new Error('Slots can only be created between 10:00 and 20:00');
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
+const createSlotsForDateRange = async (data) => {
+  const interval = getSlotIntervalMinutes(data.interval || data.intervalMinutes);
+  const rangeStart = buildDateTime(data.date, data.startTime, 'startTime');
+  const rangeEnd = buildDateTime(data.date, data.endTime, 'endTime');
+
+  ensureWeekendSlot(rangeStart);
+  ensureSlotWithinClinicHours(rangeStart, rangeEnd);
+
+  if (rangeStart >= rangeEnd) {
+    const error = new Error('startTime must be earlier than endTime');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const slots = [];
+  for (let startTime = new Date(rangeStart); startTime < rangeEnd; startTime = new Date(startTime.getTime() + interval * 60000)) {
+    const endTime = new Date(startTime.getTime() + interval * 60000);
+    if (endTime > rangeEnd) {
+      break;
+    }
+
+    slots.push({
+      startTime: new Date(startTime),
+      endTime,
+      available: data.available !== undefined ? data.available : true,
+      doctor: data.doctor,
+    });
+  }
+
+  const operations = slots.map((slot) => ({
+    updateOne: {
+      filter: { startTime: slot.startTime, endTime: slot.endTime },
+      update: { $setOnInsert: slot },
+      upsert: true,
+    },
+  }));
+
+  if (!operations.length) {
+    return [];
+  }
+
+  await Slot.bulkWrite(operations);
+  return Slot.find({
+    startTime: { $gte: rangeStart },
+    endTime: { $lte: rangeEnd },
+  });
+};
+
 exports.createSlot = async (data) => {
-  ensureWeekendSlot(new Date(data.startTime));
+  if (data.date) {
+    return createSlotsForDateRange(data);
+  }
+
+  const startTime = new Date(data.startTime);
+  const endTime = new Date(data.endTime);
+  ensureWeekendSlot(startTime);
+  ensureSlotWithinClinicHours(startTime, endTime);
   return Slot.create(data);
 };
 
