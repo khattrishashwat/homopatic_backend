@@ -5,6 +5,7 @@ const PaymentSchema = new mongoose.Schema({
   razorpay_payment_id: { type: String },
   razorpay_signature: { type: String },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient' },
   appointment: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' },
   amount: { type: Number, required: true },
   currency: { type: String, default: 'INR' },

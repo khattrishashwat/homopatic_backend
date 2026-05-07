@@ -5,6 +5,7 @@ exports.createOrder = async (req, res, next) => {
     const orderData = {
       amount: req.body.amount,
       appointmentId: req.body.appointmentId,
+      patientId: req.body.patientId,
       userId: req.user._id,
       description: req.body.description,
       customerName: req.body.customerName || req.user.name,

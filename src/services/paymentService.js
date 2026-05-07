@@ -27,6 +27,7 @@ exports.createOrder = async (data) => {
     const payment = await Payment.create({
       razorpay_order_id: razorpayOrder.id,
       user: data.userId,
+      patient: data.patientId,
       appointment: data.appointmentId,
       amount: data.amount,
       currency: 'INR',
@@ -101,21 +102,22 @@ exports.getPaymentDetails = async (paymentId) => {
   return payment;
 };
 
-exports.refundPayment = async (razorpayPaymentId, reason) => {
+exports.refundPayment = async (paymentId, reason) => {
   try {
-    const refund = await razorpay.payments.refund(razorpayPaymentId, {
+    const payment = await Payment.findById(paymentId);
+    if (!payment || !payment.razorpay_payment_id) {
+      const error = new Error('Payment record not found or not refundable');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const refund = await razorpay.payments.refund(payment.razorpay_payment_id, {
       notes: { reason },
     });
 
-    // Update payment status
-    const payment = await Payment.findOneAndUpdate(
-      { razorpay_payment_id: razorpayPaymentId },
-      {
-        status: 'refunded',
-        updated_at: new Date(),
-      },
-      { new: true }
-    );
+    payment.status = 'refunded';
+    payment.updated_at = new Date();
+    await payment.save();
 
     return { refund, payment };
   } catch (error) {
@@ -126,12 +128,14 @@ exports.refundPayment = async (razorpayPaymentId, reason) => {
 };
 
 exports.getPaymentHistory = async (userId, filters = {}) => {
-  const query = { user: userId };
-
+  const query = {};
+  if (userId) query.user = userId;
+  if (filters.patientId) query.patient = filters.patientId;
   if (filters.status) query.status = filters.status;
+  if (filters.payment_method) query.payment_method = filters.payment_method;
 
-  const page = parseInt(filters.page) || 1;
-  const limit = parseInt(filters.limit) || 10;
+  const page = parseInt(filters.page, 10) || 1;
+  const limit = parseInt(filters.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
   const payments = await Payment.find(query)

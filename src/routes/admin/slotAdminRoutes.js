@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const slotAdminController = require('../../controllers/admin/slotAdminController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const slotController = require('../../modules/slots/slot.controller');
 
 router.use(authMiddleware.requireAdmin);
-router.post('/', slotAdminController.createSlot);
-router.get('/', slotAdminController.listSlots);
-router.patch('/available-all', slotAdminController.makeAllSlotsAvailable);
-router.post('/generate-weekends', slotAdminController.generateWeekendSlots);
-router.patch('/:id', slotAdminController.updateSlot);
+router.post('/', slotController.createSlot);
+router.get('/', slotController.getAllSlots);
+router.patch('/available-all', slotController.makeAllSlotsAvailable);
+router.post('/generate-weekends', slotController.generateWeekendSlots);
+router.patch('/:id', slotController.updateSlot);
 
 module.exports = router;
