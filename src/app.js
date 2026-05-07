@@ -2,11 +2,7 @@ const express = require('express');
 const cors = require('cors');
 
 // User Routes
-const appointmentRoutes = require('./routes/user/appointmentRoutes');
-const contactRoutes = require('./routes/user/contactRoutes');
-const slotRoutes = require('./routes/user/slotRoutes');
-const authRoutes = require('./routes/user/authRoutes');
-const paymentRoutes = require('./routes/user/paymentRoutes');
+// (legacy /api/user routes removed in favor of /api/web)
 
 // Website API Routes
 const webAppointmentRoutes = require('./routes/web/appointmentRoutes');
@@ -19,7 +15,9 @@ const webNotificationRoutes = require('./routes/web/notificationRoutes');
 const webSettingsRoutes = require('./routes/web/settingsRoutes');
 const webProductRoutes = require('./routes/web/productRoutes');
 const webBlogRoutes = require('./routes/web/blogRoutes');
-const webPaymentRoutes = require('./routes/user/paymentRoutes');
+const webPaymentRoutes = require('./routes/web/paymentRoutes');
+const webAuthRoutes = require('./routes/web/authRoutes');
+const webContactRoutes = require('./routes/web/contactRoutes');
 
 // Admin Routes
 const appointmentAdminRoutes = require('./routes/admin/appointmentAdminRoutes');
@@ -46,13 +44,6 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
 
-// User Routes
-app.use('/api/user/appointments', appointmentRoutes);
-app.use('/api/user/contacts', contactRoutes);
-app.use('/api/user/slots', slotRoutes);
-app.use('/api/user/payments', paymentRoutes);
-app.use('/api/auth', authRoutes);
-
 // Website API Routes
 app.use('/api/web/appointments', webAppointmentRoutes);
 app.use('/api/web/slots', webSlotRoutes);
@@ -65,6 +56,9 @@ app.use('/api/web/settings', webSettingsRoutes);
 app.use('/api/web/products', webProductRoutes);
 app.use('/api/web/blogs', webBlogRoutes);
 app.use('/api/web/payments', webPaymentRoutes);
+app.use('/api/web/auth', webAuthRoutes);
+app.use('/api/web/contacts', webContactRoutes);
+app.use('/api/auth', webAuthRoutes);
 
 // Admin Routes
 app.use('/api/admin/appointments', appointmentAdminRoutes);
