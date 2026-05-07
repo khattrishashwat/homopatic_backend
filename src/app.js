@@ -35,10 +35,6 @@ const paymentAdminRoutes = require('./routes/admin/paymentAdminRoutes');
 const productAdminRoutes = require('./routes/admin/productAdminRoutes');
 const blogAdminRoutes = require('./routes/admin/blogAdminRoutes');
 
-// Public Routes
-const blogRoutes = require('./routes/blogRoutes');
-const productRoutes = require('./routes/admin/productRoutes');
-
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const app = express();
@@ -85,8 +81,8 @@ app.use('/api/admin/products', productAdminRoutes);
 app.use('/api/admin/blogs', blogAdminRoutes);
 
 // Public Routes
-app.use('/api/blog', blogRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/blog', webBlogRoutes);
+app.use('/api/products', webProductRoutes);
 
 app.use(errorMiddleware);
 
