@@ -32,6 +32,15 @@ exports.updatePatient = async (req, res, next) => {
   }
 };
 
+exports.deletePatient = async (req, res, next) => {
+  try {
+    await patientService.deletePatient(req.params.id);
+    res.json({ success: true, message: 'Patient deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getPatientById = async (req, res, next) => {
   try {
     const patient = await patientService.getPatientById(req.params.id);

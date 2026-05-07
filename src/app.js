@@ -1,9 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 
-// User Routes
-// (legacy /api/user routes removed in favor of /api/web)
-
 // Website API Routes
 const webAppointmentRoutes = require('./routes/web/appointmentRoutes');
 const webSlotRoutes = require('./routes/web/slotRoutes');

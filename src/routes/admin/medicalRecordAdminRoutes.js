@@ -8,5 +8,6 @@ router.use(authMiddleware.requireAdmin);
 router.post('/', multer.single('record'), medicalRecordController.uploadRecord);
 router.get('/', medicalRecordController.listRecords);
 router.get('/:id', medicalRecordController.getRecordById);
+router.delete('/:id', medicalRecordController.deleteRecord);
 
 module.exports = router;

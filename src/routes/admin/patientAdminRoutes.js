@@ -8,6 +8,7 @@ router.post('/', patientController.createPatient);
 router.get('/', patientController.listPatients);
 router.get('/:id', patientController.getPatientById);
 router.patch('/:id', patientController.updatePatient);
+router.delete('/:id', patientController.deletePatient);
 router.post('/link-family', patientController.linkFamily);
 router.get('/:id/profile', patientController.getPatientProfile);
 

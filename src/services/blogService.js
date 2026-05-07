@@ -1,8 +1,13 @@
 const Blog = require('../models/Blog');
 const { v4: uuidv4 } = require('uuid');
-const slug = require('slug');
 const fs = require('fs').promises;
-const path = require('path');
+
+const slugify = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 exports.getAllBlogs = async (filters = {}) => {
   const query = { published: true };
@@ -48,7 +53,7 @@ exports.getBlogBySlug = async (blogSlug) => {
 };
 
 exports.createBlog = async (data, userId) => {
-  const blogSlug = slug(data.title, { lower: true });
+  const blogSlug = slugify(data.title);
 
   // Check if slug already exists
   const existingBlog = await Blog.findOne({ slug: blogSlug });
@@ -87,7 +92,7 @@ exports.updateBlog = async (id, data, userId) => {
 
   // If title changed, update slug
   if (data.title && data.title !== blog.title) {
-    const newSlug = slug(data.title, { lower: true });
+    const newSlug = slugify(data.title);
     const existingBlog = await Blog.findOne({ slug: newSlug, _id: { $ne: id } });
     if (existingBlog) {
       const error = new Error('Blog title already exists');

@@ -37,3 +37,12 @@ exports.listRecords = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.deleteRecord = async (req, res, next) => {
+  try {
+    await medicalRecordService.deleteRecord(req.params.id);
+    res.json({ success: true, message: 'Medical record deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -28,6 +28,24 @@ exports.getPrescriptionById = async (req, res, next) => {
   }
 };
 
+exports.updatePrescription = async (req, res, next) => {
+  try {
+    const prescription = await prescriptionService.updatePrescription(req.params.id, req.body);
+    res.json({ success: true, data: prescription });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deletePrescription = async (req, res, next) => {
+  try {
+    await prescriptionService.deletePrescription(req.params.id);
+    res.json({ success: true, message: 'Prescription deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.listPrescriptions = async (req, res, next) => {
   try {
     const result = await prescriptionService.listPrescriptions(req.query);

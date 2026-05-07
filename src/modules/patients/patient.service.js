@@ -44,6 +44,19 @@ exports.updatePatient = async (id, data) => {
   return patient.save();
 };
 
+exports.deletePatient = async (id) => {
+  const patient = await Patient.findById(id);
+  if (!patient) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  patient.active = false;
+  patient.updated_at = new Date();
+  return patient.save();
+};
+
 exports.getPatientById = async (id) => {
   const query = id.match(/^[0-9a-fA-F]{24}$/) ? { $or: [{ _id: id }, { patientId: id }] } : { patientId: id };
   const patient = await Patient.findOne(query).populate('family_members');

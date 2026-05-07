@@ -35,7 +35,7 @@ exports.getOrderById = async (req, res, next) => {
 exports.listOrders = async (req, res, next) => {
   try {
     const filters = {
-      userId: req.user?._id,
+      userId: req.query.userId,
       order_status: req.query.order_status,
       payment_status: req.query.payment_status,
       page: req.query.page,

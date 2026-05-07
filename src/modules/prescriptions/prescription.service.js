@@ -4,7 +4,10 @@ const Appointment = require('../../models/Appointment');
 const { generatePrescriptionPdf } = require('../../utils/pdfGenerator');
 
 exports.createPrescription = async (data) => {
-  const patient = await Patient.findById(data.patientId);
+  const patientQuery = data.patientId?.match(/^[0-9a-fA-F]{24}$/)
+    ? { $or: [{ _id: data.patientId }, { patientId: data.patientId }] }
+    : { patientId: data.patientId };
+  const patient = await Patient.findOne(patientQuery);
   if (!patient) {
     const error = new Error('Patient not found');
     error.statusCode = 404;
@@ -35,6 +38,35 @@ exports.createPrescription = async (data) => {
 
 exports.getPrescriptionById = async (id) => {
   const prescription = await Prescription.findById(id).populate('patient doctor appointment');
+  if (!prescription) {
+    const error = new Error('Prescription not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return prescription;
+};
+
+exports.updatePrescription = async (id, data) => {
+  const prescription = await Prescription.findById(id);
+  if (!prescription) {
+    const error = new Error('Prescription not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  Object.assign(prescription, {
+    title: data.title ?? prescription.title,
+    medicines: data.medicines ?? prescription.medicines,
+    notes: data.notes ?? prescription.notes,
+    status: data.status ?? prescription.status,
+    updated_at: new Date(),
+  });
+
+  return prescription.save();
+};
+
+exports.deletePrescription = async (id) => {
+  const prescription = await Prescription.findByIdAndDelete(id);
   if (!prescription) {
     const error = new Error('Prescription not found');
     error.statusCode = 404;

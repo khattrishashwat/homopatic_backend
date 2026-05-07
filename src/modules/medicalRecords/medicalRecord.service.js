@@ -1,8 +1,12 @@
 const MedicalRecord = require('../../models/MedicalRecord');
 const Patient = require('../../models/Patient');
+const fs = require('fs').promises;
 
 exports.uploadRecord = async ({ patientId, appointmentId, uploadedBy, file, title, description, notes, recordDate }) => {
-  const patient = await Patient.findById(patientId);
+  const patientQuery = patientId?.match(/^[0-9a-fA-F]{24}$/)
+    ? { $or: [{ _id: patientId }, { patientId }] }
+    : { patientId };
+  const patient = await Patient.findOne(patientQuery);
   if (!patient) {
     const error = new Error('Patient not found');
     error.statusCode = 404;
@@ -61,4 +65,23 @@ exports.listRecords = async (filters = {}) => {
     data: records,
     pagination: { total, page, limit, pages: Math.ceil(total / limit) },
   };
+};
+
+exports.deleteRecord = async (id) => {
+  const record = await MedicalRecord.findByIdAndDelete(id);
+  if (!record) {
+    const error = new Error('Medical record not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (record.file_path) {
+    try {
+      await fs.unlink(record.file_path);
+    } catch (error) {
+      console.error('Failed to delete medical record file:', error);
+    }
+  }
+
+  return record;
 };
