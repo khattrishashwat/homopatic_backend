@@ -1,10 +1,10 @@
 const Notification = require('../models/Notification');
 
-exports.sendContactNotification = async ({ name, email, message }) => {
+exports.sendContactNotification = async ({ name, email, phone, message }) => {
   return Notification.create({
     user: null,
     title: 'Contact request',
-    message: `Message from ${name} <${email}>: ${message}`,
+    message: `Message from ${name} (${phone}${email ? `, ${email}` : ''}): ${message}`,
   });
 };
 

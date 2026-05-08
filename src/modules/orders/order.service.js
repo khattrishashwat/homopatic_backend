@@ -9,7 +9,9 @@ exports.createOrder = async (data) => {
   let subtotal = 0;
 
   for (const item of data.items) {
-    const product = await Product.findById(item.productId);
+    const product = item.productId
+      ? await Product.findById(item.productId)
+      : await Product.findOne({ slug: item.productSlug });
     if (!product) {
       const error = new Error(`Product not found: ${item.productId}`);
       error.statusCode = 404;

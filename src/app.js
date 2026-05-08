@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Website API Routes
 const webAppointmentRoutes = require('./routes/web/appointmentRoutes');
@@ -15,6 +16,7 @@ const webBlogRoutes = require('./routes/web/blogRoutes');
 const webPaymentRoutes = require('./routes/web/paymentRoutes');
 const webAuthRoutes = require('./routes/web/authRoutes');
 const webContactRoutes = require('./routes/web/contactRoutes');
+const webGoogleReviewsRoutes = require('./routes/web/googleReviewsRoutes');
 
 // Admin Routes
 const appointmentAdminRoutes = require('./routes/admin/appointmentAdminRoutes');
@@ -39,7 +41,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Website API Routes
 app.use('/api/web/appointments', webAppointmentRoutes);
@@ -55,6 +57,7 @@ app.use('/api/web/blogs', webBlogRoutes);
 app.use('/api/web/payments', webPaymentRoutes);
 app.use('/api/web/auth', webAuthRoutes);
 app.use('/api/web/contacts', webContactRoutes);
+app.use('/api/web/google-reviews', webGoogleReviewsRoutes);
 app.use('/api/auth', webAuthRoutes);
 
 // Admin Routes

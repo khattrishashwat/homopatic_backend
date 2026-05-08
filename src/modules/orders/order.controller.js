@@ -16,6 +16,8 @@ exports.createOrder = async (req, res, next) => {
       shipping_address: req.body.shipping_address,
       notes: req.body.notes,
       paymentId: req.body.paymentId,
+      order_status: req.body.order_status,
+      payment_status: req.body.payment_status,
     });
     res.status(201).json({ success: true, data: order });
   } catch (error) {
