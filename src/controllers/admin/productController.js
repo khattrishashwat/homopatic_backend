@@ -1,218 +1,200 @@
+const productService = require('../../services/productService');
 const Product = require('../../models/Product');
 const fs = require('fs').promises;
 
+/**
+ * Get all products (public API)
+ */
 exports.getAllProducts = async (req, res, next) => {
   try {
-    const query = { active: true, in_stock: true };
-
-    if (req.query.category) query.category = req.query.category;
-    if (req.query.search) {
-      query.$or = [
-        { name: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } },
-      ];
-    }
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
-    const skip = (page - 1) * limit;
-
-    const products = await Product.find(query)
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Product.countDocuments(query);
-
-    res.json({
-      success: true,
-      data: products,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
+    const result = await productService.getAllProducts(req.query);
+    res.json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Get product by slug (public API)
+ */
 exports.getProductBySlug = async (req, res, next) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug });
-    if (!product) {
-      const error = new Error('Product not found');
-      error.statusCode = 404;
-      throw error;
-    }
+    const product = await productService.getProductBySlug(req.params.slug);
     res.json({ success: true, data: product });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Get featured products (public API)
+ */
+exports.getFeaturedProducts = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 6;
+    const products = await productService.getFeaturedProducts(limit);
+    res.json({ success: true, data: products });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Create product (admin)
+ */
 exports.createProduct = async (req, res, next) => {
   try {
     const productData = {
       name: req.body.name,
-      slug: req.body.slug || req.body.name.toLowerCase().replace(/ /g, '-'),
+      slug: req.body.slug,
+      short_description: req.body.short_description,
       description: req.body.description,
       price: req.body.price,
       compare_price: req.body.compare_price,
       category: req.body.category,
-      stock: req.body.stock || 0,
+      stock: req.body.stock,
       sku: req.body.sku,
-      in_stock: req.body.stock > 0,
-      weight: req.body.weight,
-      dimensions: req.body.dimensions,
-      attributes: req.body.attributes,
+      image_alt: req.body.image_alt,
+      gallery: req.body.gallery ? JSON.parse(req.body.gallery) : [],
+      attributes: req.body.attributes ? JSON.parse(req.body.attributes) : {},
       seo_title: req.body.seo_title,
       seo_description: req.body.seo_description,
-      created_by: req.user._id,
+      seo_keywords: req.body.seo_keywords ? String(req.body.seo_keywords).split(',').map((k) => k.trim()) : [],
+      canonical_url: req.body.canonical_url,
+      og_image: req.body.og_image,
+      active: req.body.active === 'true' || req.body.active === true,
+      featured: req.body.featured === 'true' || req.body.featured === true,
     };
 
-    // Handle image uploads
-    if (req.files) {
-      if (req.files.image) {
-        productData.image = `/uploads/${req.files.image[0].filename}`;
-        productData.image_path = req.files.image[0].path;
-      }
-      if (req.files.images) {
-        productData.images = req.files.images.map((f) => `/uploads/${f.filename}`);
-        productData.images_paths = req.files.images.map((f) => f.path);
-      }
+    // Handle image upload
+    if (req.files && req.files.image) {
+      productData.image = `/uploads/${req.files.image[0].filename}`;
     }
 
-    const product = await Product.create(productData);
+    // Handle gallery uploads
+    if (req.files && req.files.gallery) {
+      productData.gallery = req.files.gallery.map((file) => ({
+        url: `/uploads/${file.filename}`,
+alt: req.body.gallery_alts
+  ? JSON.parse(req.body.gallery_alts || '{}')[file.filename] || ''
+  : '',
+      }));
+    }
+
+    const product = await productService.createProduct(productData, req.user._id);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Update product (admin)
+ */
 exports.updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      const error = new Error('Product not found');
-      error.statusCode = 404;
-      throw error;
+    const productId = req.params.id;
+    const updates = {};
+
+    // Collect updates from body
+    const fields = [
+      'name', 'slug', 'short_description', 'description',
+      'price', 'compare_price', 'category', 'stock', 'sku',
+      'image_alt', 'attributes', 'seo_title', 'seo_description',
+      'canonical_url', 'og_image'
+    ];
+
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = field === 'attributes' ? JSON.parse(req.body[field]) : req.body[field];
+      }
+    });
+
+    // Handle seo_keywords separately
+    if (req.body.seo_keywords) {
+      updates.seo_keywords = String(req.body.seo_keywords).split(',').map((k) => k.trim());
     }
 
-    // Handle image updates
-    if (req.files) {
-      if (req.files.image && product.image_path) {
-        try {
-          await fs.unlink(product.image_path);
-        } catch (err) {
-          console.error('Failed to delete old image:', err);
-        }
-      }
-
-      if (req.files.image) {
-        product.image = `/uploads/${req.files.image[0].filename}`;
-        product.image_path = req.files.image[0].path;
-      }
-
-      if (req.files.images && product.images_paths?.length > 0) {
-        for (const imagePath of product.images_paths) {
-          try {
-            await fs.unlink(imagePath);
-          } catch (err) {
-            console.error('Failed to delete old image:', err);
-          }
-        }
-      }
-
-      if (req.files.images) {
-        product.images = req.files.images.map((f) => `/uploads/${f.filename}`);
-        product.images_paths = req.files.images.map((f) => f.path);
-      }
+    // Handle gallery
+    if (req.body.gallery) {
+      updates.gallery = JSON.parse(String(req.body.gallery));
     }
 
-    // Update fields
-    Object.assign(product, req.body);
-    product.updated_at = new Date();
-    await product.save();
+    // Handle booleans
+    if (req.body.active !== undefined) {
+      updates.active = req.body.active === 'true' || req.body.active === true;
+    }
+    if (req.body.featured !== undefined) {
+      updates.featured = req.body.featured === 'true' || req.body.featured === true;
+    }
 
+    // Handle image upload
+    if (req.files && req.files.image) {
+      updates.image = `/uploads/${req.files.image[0].filename}`;
+    }
+
+    // Handle gallery uploads
+    if (req.files && req.files.gallery) {
+      const existingGallery = updates.gallery || (await Product.findById(productId))?.gallery || [];
+      const newGalleryItems = req.files.gallery.map((file) => ({
+        url: `/uploads/${file.filename}`,
+        alt: req.body.gallery_alts ? JSON.parse(String(req.body.gallery_alts || '{}'))[file.filename] || '' : '',
+      }));
+      updates.gallery = [...existingGallery, ...newGalleryItems];
+    }
+
+    const product = await productService.updateProduct(productId, updates, req.user._id);
     res.json({ success: true, data: product });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Delete product (admin)
+ */
 exports.deleteProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      const error = new Error('Product not found');
-      error.statusCode = 404;
-      throw error;
-    }
-
-    // Delete images from filesystem
-    if (product.image_path) {
-      try {
-        await fs.unlink(product.image_path);
-      } catch (err) {
-        console.error('Failed to delete image:', err);
-      }
-    }
-
-    if (product.images_paths?.length > 0) {
-      for (const imagePath of product.images_paths) {
-        try {
-          await fs.unlink(imagePath);
-        } catch (err) {
-          console.error('Failed to delete image:', err);
-        }
-      }
-    }
-
+    await productService.deleteProduct(req.params.id);
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Get admin products list
+ */
 exports.getAdminProducts = async (req, res, next) => {
   try {
-    const query = {};
+    const result = await productService.getAdminProducts(req.query);
+    res.json({ success: true, data: result.data, pagination: result.pagination });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    if (req.query.search) {
-      query.$or = [
-        { name: { $regex: req.query.search, $options: 'i' } },
-        { sku: { $regex: req.query.search, $options: 'i' } },
-      ];
-    }
+/**
+ * Toggle product featured status
+ */
+exports.toggleFeatured = async (req, res, next) => {
+  try {
+    const product = await productService.toggleFeatured(req.params.id);
+    res.json({ success: true, data: product });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    if (req.query.category) query.category = req.query.category;
-    if (req.query.in_stock !== undefined) query.in_stock = req.query.in_stock === 'true';
-
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const products = await Product.find(query)
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate('created_by', 'name email');
-
-    const total = await Product.countDocuments(query);
-
-    res.json({
-      success: true,
-      data: products,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
+/**
+ * Search products
+ */
+exports.searchProducts = async (req, res, next) => {
+  try {
+    const query = req.query.q;
+    const limit = parseInt(req.query.limit) || 10;
+    const products = await productService.searchProducts(query, limit);
+    res.json({ success: true, data: products });
   } catch (error) {
     next(error);
   }

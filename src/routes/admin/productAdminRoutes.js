@@ -9,7 +9,7 @@ router.post(
   '/',
   multer.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'images', maxCount: 10 },
+    { name: 'gallery', maxCount: 10 },
   ]),
   productController.createProduct
 );
@@ -19,7 +19,7 @@ router.patch(
   '/:id',
   multer.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'images', maxCount: 10 },
+    { name: 'gallery', maxCount: 10 },
   ]),
   productController.updateProduct
 );

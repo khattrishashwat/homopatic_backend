@@ -13,6 +13,7 @@ const webNotificationRoutes = require('./routes/web/notificationRoutes');
 const webSettingsRoutes = require('./routes/web/settingsRoutes');
 const webProductRoutes = require('./routes/web/productRoutes');
 const webBlogRoutes = require('./routes/web/blogRoutes');
+const webCategoryRoutes = require('./routes/web/categoryRoutes');
 const webPaymentRoutes = require('./routes/web/paymentRoutes');
 const webAuthRoutes = require('./routes/web/authRoutes');
 const webContactRoutes = require('./routes/web/contactRoutes');
@@ -31,8 +32,12 @@ const notificationAdminRoutes = require('./routes/admin/notificationAdminRoutes'
 const paymentAdminRoutes = require('./routes/admin/paymentAdminRoutes');
 const productAdminRoutes = require('./routes/admin/productAdminRoutes');
 const blogAdminRoutes = require('./routes/admin/blogAdminRoutes');
+const categoryAdminRoutes = require('./routes/admin/categoryAdminRoutes');
 
 const errorMiddleware = require('./middlewares/errorMiddleware');
+
+// SEO Routes
+const seoRoutes = require('./routes/web/seoRoutes');
 
 const app = express();
 
@@ -54,6 +59,7 @@ app.use('/api/web/notifications', webNotificationRoutes);
 app.use('/api/web/settings', webSettingsRoutes);
 app.use('/api/web/products', webProductRoutes);
 app.use('/api/web/blogs', webBlogRoutes);
+app.use('/api/web/categories', webCategoryRoutes);
 app.use('/api/web/payments', webPaymentRoutes);
 app.use('/api/web/auth', webAuthRoutes);
 app.use('/api/web/contacts', webContactRoutes);
@@ -73,10 +79,15 @@ app.use('/api/admin/notifications', notificationAdminRoutes);
 app.use('/api/admin/payments', paymentAdminRoutes);
 app.use('/api/admin/products', productAdminRoutes);
 app.use('/api/admin/blogs', blogAdminRoutes);
+app.use('/api/admin/categories', categoryAdminRoutes);
 
-// Public Routes
+// SEO Public Routes
 app.use('/api/blog', webBlogRoutes);
 app.use('/api/products', webProductRoutes);
+app.use('/api/category', webCategoryRoutes);
+
+// SEO Routes (sitemap, robots)
+app.use('/api/seo', seoRoutes);
 
 app.use(errorMiddleware);
 
