@@ -46,11 +46,6 @@ const SiteSettingsSchema = new mongoose.Schema({
     enable_sms: { type: Boolean, default: true },
     enable_whatsapp: { type: Boolean, default: true },
   },
-  seo_settings: {
-    meta_title: { type: String },
-    meta_description: { type: String },
-    meta_keywords: { type: String },
-  },
   updated_at: { type: Date, default: Date.now },
   updated_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 });

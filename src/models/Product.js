@@ -123,32 +123,7 @@ const ProductSchema = new mongoose.Schema(
       height: Number,
     },
 
-    // SEO
-    seo_title: {
-      type: String,
-      trim: true,
-    },
-
-    seo_description: {
-      type: String,
-      trim: true,
-    },
-
-    seo_keywords: [
-      {
-        type: String,
-      },
-    ],
-
-    canonical_url: {
-      type: String,
-    },
-
-    og_image: {
-      type: String,
-    },
-
-    // Status
+    // Physical
     active: {
       type: Boolean,
       default: true,
@@ -189,8 +164,6 @@ ProductSchema.index({
   name: "text",
   description: "text",
   short_description: "text",
-  seo_title: "text",
-  seo_description: "text",
 });
 
 // Slug Index

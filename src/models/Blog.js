@@ -66,10 +66,6 @@ const BlogSchema = new mongoose.Schema(
       trim: true,
     },
 
-    og_image: {
-      type: String,
-    },
-
     // Author
     author: {
       type: String,
@@ -80,29 +76,7 @@ const BlogSchema = new mongoose.Schema(
       type: String,
     },
 
-    // SEO
-    seo_title: {
-      type: String,
-      trim: true,
-    },
-
-    meta_description: {
-      type: String,
-      trim: true,
-      maxlength: 160,
-    },
-
-    meta_keywords: [
-      {
-        type: String,
-      },
-    ],
-
-    canonical_url: {
-      type: String,
-    },
-
-    // Reading
+    // Author
     reading_time: {
       type: Number, // minutes
     },
@@ -151,8 +125,6 @@ BlogSchema.index({
   title: "text",
   excerpt: "text",
   content: "text",
-  seo_title: "text",
-  meta_description: "text",
 });
 
 BlogSchema.index({ slug: 1 });

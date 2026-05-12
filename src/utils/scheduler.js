@@ -7,7 +7,6 @@ const whatsappService = require('../services/whatsappService');
 const generateWeekendSlots = async () => {
   try {
     const result = await slotService.generateWeekendSlots();
-    console.log('Weekend slot generation completed:', result);
   } catch (error) {
     console.error('Weekend slot generation failed:', error.message);
   }

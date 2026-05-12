@@ -57,11 +57,6 @@ exports.createProduct = async (req, res, next) => {
       image_alt: req.body.image_alt,
       gallery: req.body.gallery ? JSON.parse(req.body.gallery) : [],
       attributes: req.body.attributes ? JSON.parse(req.body.attributes) : {},
-      seo_title: req.body.seo_title,
-      seo_description: req.body.seo_description,
-      seo_keywords: req.body.seo_keywords ? String(req.body.seo_keywords).split(',').map((k) => k.trim()) : [],
-      canonical_url: req.body.canonical_url,
-      og_image: req.body.og_image,
       active: req.body.active === 'true' || req.body.active === true,
       featured: req.body.featured === 'true' || req.body.featured === true,
     };
@@ -100,20 +95,8 @@ exports.updateProduct = async (req, res, next) => {
     const fields = [
       'name', 'slug', 'short_description', 'description',
       'price', 'compare_price', 'category', 'stock', 'sku',
-      'image_alt', 'attributes', 'seo_title', 'seo_description',
-      'canonical_url', 'og_image'
+      'image_alt', 'attributes'
     ];
-
-    fields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        updates[field] = field === 'attributes' ? JSON.parse(req.body[field]) : req.body[field];
-      }
-    });
-
-    // Handle seo_keywords separately
-    if (req.body.seo_keywords) {
-      updates.seo_keywords = String(req.body.seo_keywords).split(',').map((k) => k.trim());
-    }
 
     // Handle gallery
     if (req.body.gallery) {

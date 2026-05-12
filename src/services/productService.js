@@ -58,7 +58,7 @@ exports.getAllProducts = async (filters = {}) => {
  */
 exports.getProductBySlug = async (slug) => {
   const product = await Product.findOne({ slug, active: true })
-    .populate('category', 'name slug seo_title seo_description');
+    .populate('category', 'name slug');
 
   if (!product) {
     const error = new Error('Product not found');
@@ -138,11 +138,6 @@ exports.createProduct = async (data, userId) => {
     image_alt: data.image_alt,
     gallery: data.gallery || [],
     attributes: data.attributes || {},
-    seo_title: data.seo_title,
-    seo_description: data.seo_description,
-    seo_keywords: data.seo_keywords || [],
-    canonical_url: data.canonical_url,
-    og_image: data.og_image || data.image,
     active: data.active !== undefined ? data.active : true,
     featured: data.featured || false,
     created_by: userId,
@@ -179,8 +174,7 @@ exports.updateProduct = async (id, data, userId) => {
   const updateFields = [
     'name', 'short_description', 'description', 'price', 'compare_price',
     'category', 'stock', 'sku', 'image', 'image_alt', 'gallery',
-    'attributes', 'seo_title', 'seo_description', 'seo_keywords',
-    'canonical_url', 'og_image', 'active', 'featured'
+    'attributes', 'active', 'featured'
   ];
 
   updateFields.forEach(field => {

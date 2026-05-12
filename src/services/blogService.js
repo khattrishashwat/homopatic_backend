@@ -64,7 +64,7 @@ exports.getAllBlogs = async (filters = {}) => {
  */
 exports.getBlogBySlug = async (slug) => {
   const blog = await Blog.findOne({ slug, published: true })
-    .populate('category', 'name slug seo_title seo_description')
+    .populate('category', 'name slug')
     .populate('created_by', 'name');
 
   if (!blog) {
@@ -140,13 +140,9 @@ exports.createBlog = async (data, userId) => {
     featured_image: data.featured_image,
     featured_image_path: data.featured_image_path,
     featured_image_alt: data.featured_image_alt,
-    og_image: data.og_image || data.featured_image,
+    featured_image_alt: data.featured_image_alt,
     author: data.author || 'Homeopathy Team',
     author_bio: data.author_bio,
-    seo_title: data.seo_title,
-    meta_description: data.meta_description,
-    meta_keywords: data.meta_keywords || [],
-    canonical_url: data.canonical_url,
     reading_time: readingTime,
     published: data.published || false,
     published_at: data.published ? new Date() : null,
@@ -180,23 +176,11 @@ exports.updateBlog = async (id, data, userId) => {
     blog.slug = newSlug;
   }
 
-  // Update fields
+  // Update allowed fields
   const updateFields = [
     'title', 'excerpt', 'content', 'category', 'tags',
-    'featured_image_alt', 'author', 'author_bio',
-    'seo_title', 'meta_description', 'canonical_url', 'og_image'
+    'featured_image_alt', 'author', 'author_bio'
   ];
-
-  updateFields.forEach(field => {
-    if (data[field] !== undefined) {
-      blog[field] = data[field];
-    }
-  });
-
-  // Handle arrays separately
-  if (data.meta_keywords !== undefined) {
-    blog.meta_keywords = Array.isArray(data.meta_keywords) ? data.meta_keywords : [data.meta_keywords];
-  }
 
   // Update reading time if content changed
   if (data.content && data.content !== blog.content) {

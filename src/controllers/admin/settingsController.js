@@ -69,11 +69,10 @@ exports.updateSiteSettings = async (req, res, next) => {
       'vision',
       'social_links',
       'business_hours',
-      'appointment_settings',
-      'payment_settings',
-      'notification_settings',
-      'seo_settings',
-    ];
+     'appointment_settings',
+     'payment_settings',
+     'notification_settings',
+   ];
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
