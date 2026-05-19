@@ -64,10 +64,8 @@ exports.getAllCategories = async (filters = {}) => {
   }
 
   const categories = await Category.find(query)
-    .sort({ createdAt: -1 })
-    .select(
-      "name slug description image image_alt active type createdAt updatedAt"
-    );
+    .sort({ name: 1 })
+    .select("name slug description");
 
   return categories;
 };
@@ -86,7 +84,7 @@ exports.getActiveCategories = async (type = "both") => {
 
   const categories = await Category.find(query)
     .sort({ name: 1 })
-    .select("name slug description image image_alt");
+    .select("name slug description");
 
   return categories;
 };
@@ -132,8 +130,6 @@ exports.createCategory = async (data) => {
     name: data.name,
     slug,
     description: data.description || "",
-    image: data.image || "",
-    image_alt: data.image_alt || "",
     active: data.active ?? true,
     type: data.type || "both",
   });
@@ -161,8 +157,6 @@ exports.updateCategory = async (id, data) => {
   // Update Fields
   category.name = data.name ?? category.name;
   category.description = data.description ?? category.description;
-  category.image = data.image ?? category.image;
-  category.image_alt = data.image_alt ?? category.image_alt;
   category.active = data.active ?? category.active;
   category.type = data.type ?? category.type;
 

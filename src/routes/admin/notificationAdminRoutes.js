@@ -6,6 +6,7 @@ const notificationController = require('../../modules/notifications/notification
 router.use(authMiddleware.requireAdmin);
 router.post('/', notificationController.createNotification);
 router.get('/', notificationController.listNotifications);
+router.patch('/:id', notificationController.updateNotification);
 router.patch('/:id/read', notificationController.markAsRead);
 
 module.exports = router;

@@ -1,14 +1,13 @@
-// controllers/admin/categoryController.js
-
 const categoryService = require("../../services/categoryService");
 
 /**
  * Get All Categories
  */
 exports.getAllCategories = async (req, res, next) => {
+
   try {
     const categories = await categoryService.getAllCategories(req.query);
-
+console.log("Fetched Categories:", categories); // Debug log
     res.status(200).json({
       success: true,
       count: categories.length,
@@ -74,10 +73,8 @@ exports.getCategoryById = async (req, res, next) => {
  * Create Category
  */
 exports.createCategory = async (req, res, next) => {
-  console.log('Request body:', req.body);
   try {
     const category = await categoryService.createCategory(req.body);
-console.log('Category created:', category);
     res.status(201).json({
       success: true,
       message: "Category created successfully",

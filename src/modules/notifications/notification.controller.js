@@ -7,7 +7,25 @@ exports.createNotification = async (req, res, next) => {
     const notification = await notificationService.createNotification({
       userId: req.body.userId || req.user?._id,
       title: req.body.title,
+            type: req.body.type,
       message: req.body.message,
+      sendWhatsApp: req.body.sendWhatsApp,
+      whatsappNumber: req.body.whatsappNumber,
+    });
+    res.status(201).json({ success: true, data: notification });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateNotification = async (req, res, next) => {
+  try {
+    validation.validateNotificationPayload(req.body);
+    const notification = await notificationService.updateNotification(req.params.id,  {
+      userId: req.body.userId || req.user?._id,
+      title: req.body.title,
+      message: req.body.message,
+              type: req.body.type,
       sendWhatsApp: req.body.sendWhatsApp,
       whatsappNumber: req.body.whatsappNumber,
     });

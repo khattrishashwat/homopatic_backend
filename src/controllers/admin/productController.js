@@ -46,8 +46,6 @@ exports.createProduct = async (req, res, next) => {
   try {
     const productData = {
       name: req.body.name,
-      slug: req.body.slug,
-      short_description: req.body.short_description,
       description: req.body.description,
       price: req.body.price,
       compare_price: req.body.compare_price,
@@ -93,7 +91,7 @@ exports.updateProduct = async (req, res, next) => {
 
     // Collect updates from body
     const fields = [
-      'name', 'slug', 'short_description', 'description',
+      'name', 'slug', 'description',
       'price', 'compare_price', 'category', 'stock', 'sku',
       'image_alt', 'attributes'
     ];

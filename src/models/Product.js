@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const slugify = (value) =>
-  String(value || '')
+  String(value || "")
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const ProductSchema = new mongoose.Schema(
   {
@@ -18,16 +18,10 @@ const ProductSchema = new mongoose.Schema(
 
     slug: {
       type: String,
-      required: true,
       unique: true,
       lowercase: true,
       trim: true,
       index: true,
-    },
-
-    short_description: {
-      type: String,
-      trim: true,
     },
 
     description: {
@@ -79,13 +73,8 @@ const ProductSchema = new mongoose.Schema(
 
     gallery: [
       {
-        url: {
-          type: String,
-        },
-        alt: {
-          type: String,
-          trim: true,
-        },
+        url: String,
+        alt: String,
       },
     ],
 
@@ -94,36 +83,7 @@ const ProductSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
     },
 
-    // Medicine Specific
-    manufacturer: {
-      type: String,
-    },
-
-    dosage_form: {
-      type: String,
-    },
-
-    composition: {
-      type: String,
-    },
-
-    prescription_required: {
-      type: Boolean,
-      default: false,
-    },
-
-    // Physical
-    weight: {
-      type: Number,
-    },
-
-    dimensions: {
-      length: Number,
-      width: Number,
-      height: Number,
-    },
-
-    // Physical
+    // Status
     active: {
       type: Boolean,
       default: true,
@@ -132,17 +92,6 @@ const ProductSchema = new mongoose.Schema(
     featured: {
       type: Boolean,
       default: false,
-    },
-
-    // Ratings
-    average_rating: {
-      type: Number,
-      default: 0,
-    },
-
-    total_reviews: {
-      type: Number,
-      default: 0,
     },
 
     // Audit
@@ -163,36 +112,76 @@ const ProductSchema = new mongoose.Schema(
 ProductSchema.index({
   name: "text",
   description: "text",
-  short_description: "text",
 });
 
-// Slug Index
+// Other Indexes
 ProductSchema.index({ slug: 1 });
-
-// Category Index
 ProductSchema.index({ category: 1 });
-
-// Active and Featured Index
 ProductSchema.index({ active: 1, featured: 1 });
 
-// Auto-generate slug before saving
-ProductSchema.pre('save', function(next) {
-  if (this.isModified('name') && !this.isModified('slug')) {
-    let baseSlug = slugify(this.name);
-    this.slug = this.ensureUniqueSlug(baseSlug);
-  }
-  next();
-});
+/**
+ * Generate unique slug
+ */
+ProductSchema.statics.generateUniqueSlug = async function (
+  name,
+  productId = null
+) {
+  const baseSlug = slugify(name);
 
-ProductSchema.methods.ensureUniqueSlug = async function(baseSlug) {
   let slug = baseSlug;
   let counter = 1;
+
   while (true) {
-    const existing = await this.constructor.findOne({ slug, _id: { $ne: this._id } });
-    if (!existing) break;
-    slug = `${baseSlug}-${counter++}`;
+    const existing = await this.findOne({
+      slug,
+      ...(productId && { _id: { $ne: productId } }),
+    });
+
+    if (!existing) {
+      return slug;
+    }
+
+    slug = `${baseSlug}-${counter}`;
+    counter++;
   }
-  return slug;
 };
+
+/**
+ * Auto generate slug and image alt
+ */
+ProductSchema.pre("save", async function (next) {
+  try {
+    // Generate unique slug from name
+    if (this.isModified("name")) {
+      this.slug = await this.constructor.generateUniqueSlug(
+        this.name,
+        this._id
+      );
+    }
+
+    // Auto image alt from product name
+    if ((!this.image_alt || this.image_alt.trim() === "") && this.name) {
+      this.image_alt = `${this.name} image`;
+    }
+
+    // Auto gallery alts
+    if (this.gallery && this.gallery.length > 0) {
+      this.gallery = this.gallery.map((item, index) => ({
+        ...item,
+        alt:
+          item.alt && item.alt.trim() !== ""
+            ? item.alt
+            : `${this.name} gallery image ${index + 1}`,
+      }));
+    }
+
+    // Auto stock status
+    this.in_stock = this.stock > 0;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = mongoose.model("Product", ProductSchema);

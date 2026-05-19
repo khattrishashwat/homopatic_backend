@@ -6,6 +6,8 @@ exports.createNotification = async (data) => {
     user: data.userId,
     title: data.title,
     message: data.message,
+        type: data.type,
+
   });
 
   if (data.sendWhatsApp && data.whatsappNumber) {
@@ -17,6 +19,36 @@ exports.createNotification = async (data) => {
 
   return notification;
 };
+
+
+exports.updateNotification = async (id, data) => {
+  const notification = await Notification.findById(id);
+
+  if (!notification) {
+    const error = new Error('Notification not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  notification.title = data.title || notification.title;
+
+  notification.message = data.message || notification.message;
+
+  notification.type = data.type || notification.type;
+
+  await notification.save();
+
+  // Optional WhatsApp Send
+  if (data.sendWhatsApp && data.whatsappNumber) {
+    await whatsappService.sendWhatsAppMessage({
+      to: data.whatsappNumber,
+      body: `${notification.title}\n${notification.message}`,
+    });
+  }
+
+  return notification;
+};
+
 
 exports.listNotifications = async (filters = {}) => {
   const query = {};

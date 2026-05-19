@@ -2,14 +2,12 @@ const mongoose = require("mongoose");
 
 const CategorySchema = new mongoose.Schema(
   {
-    // Category Name
     name: {
       type: String,
       required: [true, "Category name is required"],
       trim: true,
     },
 
-    // SEO Friendly Slug
     slug: {
       type: String,
       required: true,
@@ -19,32 +17,18 @@ const CategorySchema = new mongoose.Schema(
       index: true,
     },
 
-    // Description
     description: {
       type: String,
       trim: true,
       default: "",
     },
 
-    // Category Image
-    image: {
+    status: {
       type: String,
-      default: "",
+      enum: ["active", "inactive"],
+      default: "active",
     },
 
-    // Image Alt
-    image_alt: {
-      type: String,
-      default: "",
-    },
-
-    // Active Status
-    active: {
-      type: Boolean,
-      default: true,
-    },
-
-    // Category Type
     type: {
       type: String,
       enum: ["blog", "product", "both"],
@@ -56,16 +40,13 @@ const CategorySchema = new mongoose.Schema(
   }
 );
 
-// Text Search Index
 CategorySchema.index({
   name: "text",
   description: "text",
 });
 
-// Slug Index
 CategorySchema.index({ slug: 1 });
 
-// Active + Type Index
-CategorySchema.index({ active: 1, type: 1 });
+CategorySchema.index({ status: 1, type: 1 });
 
 module.exports = mongoose.model("Category", CategorySchema);
