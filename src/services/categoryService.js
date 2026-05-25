@@ -40,9 +40,9 @@ exports.getAllCategories = async (filters = {}) => {
     query.type = { $in: [filters.type, "both"] };
   }
 
-  // Filter by active status
-  if (filters.active !== undefined) {
-    query.active = filters.active === "true";
+  // Filter by status
+  if (filters.status !== undefined) {
+    query.status = filters.status === "true";
   }
 
   // Search filter
@@ -65,15 +65,18 @@ exports.getAllCategories = async (filters = {}) => {
 
   const categories = await Category.find(query)
     .sort({ name: 1 })
-    .select("name slug description");
+    .select("name slug description status type");
 
-  return categories;
+  return categories.map((cat) => ({
+  ...cat.toObject(),
+  status: cat.status ? "active" : "inactive",
+}));
 };
 
 
 exports.getActiveCategories = async (type = "both") => {
   const query = {
-    active: true,
+    status: "active",
   };
 
   if (type && type !== "both") {
@@ -84,9 +87,12 @@ exports.getActiveCategories = async (type = "both") => {
 
   const categories = await Category.find(query)
     .sort({ name: 1 })
-    .select("name slug description");
+    .select("name slug description status type");
 
-  return categories;
+  return categories.map((cat) => ({
+    ...cat.toObject(),
+    status: cat.status ? "active" : "inactive",
+  }));
 };
 
 
@@ -130,7 +136,7 @@ exports.createCategory = async (data) => {
     name: data.name,
     slug,
     description: data.description || "",
-    active: data.active ?? true,
+    status: data.status ?? "active",
     type: data.type || "both",
   });
 
@@ -157,7 +163,7 @@ exports.updateCategory = async (id, data) => {
   // Update Fields
   category.name = data.name ?? category.name;
   category.description = data.description ?? category.description;
-  category.active = data.active ?? category.active;
+  category.status = data.status ?? category.status;
   category.type = data.type ?? category.type;
 
   await category.save();
@@ -191,9 +197,9 @@ exports.getCategoryStats = async () => {
         total: {
           $sum: 1,
         },
-        active: {
+        status: {
           $sum: {
-            $cond: ["$active", 1, 0],
+            $cond: ["$status", 1, 0],
           },
         },
       },

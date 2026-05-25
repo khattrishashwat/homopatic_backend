@@ -41,8 +41,7 @@
       .select('-created_by -updated_at');
 
     const total = await Product.countDocuments(query);
-
-    return {
+return {
       data: products,
       pagination: {
         total,

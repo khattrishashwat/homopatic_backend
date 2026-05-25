@@ -149,6 +149,7 @@ exports.deleteProduct = async (req, res, next) => {
 exports.getAdminProducts = async (req, res, next) => {
   try {
     const result = await productService.getAdminProducts(req.query);
+    console.log('Admin products result:', result);
     res.json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     next(error);

@@ -7,7 +7,7 @@ exports.getAllCategories = async (req, res, next) => {
 
   try {
     const categories = await categoryService.getAllCategories(req.query);
-console.log("Fetched Categories:", categories); // Debug log
+// console.log("Fetched Categories:", categories); 
     res.status(200).json({
       success: true,
       count: categories.length,
