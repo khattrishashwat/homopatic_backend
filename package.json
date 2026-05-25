@@ -9,7 +9,13 @@
     "dev": "nodemon server.js",
     "lint": "echo \"Add ESLint if needed\""
   },
-  "keywords": ["node", "express", "mongodb", "firebase", "appointment-system"],
+  "keywords": [
+    "node",
+    "express",
+    "mongodb",
+    "firebase",
+    "appointment-system"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -24,7 +30,7 @@
     "node-cron": "^3.0.2",
     "pdfkit": "^0.14.0",
     "razorpay": "^2.9.2",
-"twilio": "11.0.10",
+    "twilio": "5.10.5",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
