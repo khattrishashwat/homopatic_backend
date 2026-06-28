@@ -1,0 +1,48 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PORT: ${PORT:-5000}
+    container_name: health-backend-api
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-5000}
+      HOST: 0.0.0.0
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/health-backend}
+      MONGODB_URL: ${MONGO_URI:-mongodb://mongo:27017/health-backend}
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT:-/app/config/firebase-service-account.json}
+    ports:
+      - "${PORT:-5000}:${PORT:-5000}"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/src/uploads
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7.0
+    container_name: health-backend-mongo
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-health-backend}
+    ports:
+      - "27017:27017"
+    command: ["--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  uploads_data:
