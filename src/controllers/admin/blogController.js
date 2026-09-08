@@ -39,6 +39,18 @@ exports.getBlogBySlug = async (req, res, next) => {
 };
 
 /**
+ * Get blog by ID (admin)
+ */
+exports.getBlogById = async (req, res, next) => {
+  try {
+    const blog = await blogService.getBlogById(req.params.id);
+    res.json({ success: true, data: blog });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get admin blogs list
  */
 exports.getAdminBlogs = async (req, res, next) => {

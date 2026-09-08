@@ -8,6 +8,7 @@ router.use(authMiddleware.requireAdmin);
 router.post('/', multer.single('featured_image'), blogController.createBlog);
 router.get('/', blogController.getAdminBlogs);
 router.get('/admin/list', blogController.getAdminBlogs);
+router.get('/:id', blogController.getBlogById);
 router.patch('/:id', multer.single('featured_image'), blogController.updateBlog);
 router.delete('/:id', blogController.deleteBlog);
 

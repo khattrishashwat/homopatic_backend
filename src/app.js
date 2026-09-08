@@ -18,6 +18,7 @@ const webPaymentRoutes = require('./routes/web/paymentRoutes');
 const webAuthRoutes = require('./routes/web/authRoutes');
 const webContactRoutes = require('./routes/web/contactRoutes');
 const webGoogleReviewsRoutes = require('./routes/web/googleReviewsRoutes');
+const webReviewRoutes = require('./routes/web/reviewRoutes');
 
 // Admin Routes
 const appointmentAdminRoutes = require('./routes/admin/appointmentAdminRoutes');
@@ -64,6 +65,8 @@ app.use('/api/web/payments', webPaymentRoutes);
 app.use('/api/web/auth', webAuthRoutes);
 app.use('/api/web/contacts', webContactRoutes);
 app.use('/api/web/google-reviews', webGoogleReviewsRoutes);
+app.use('/api/web', webReviewRoutes);
+app.use('/api', webReviewRoutes);
 app.use('/api/auth', webAuthRoutes);
 
 // Admin Routes

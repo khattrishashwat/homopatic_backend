@@ -4,6 +4,7 @@ const authMiddleware = require('../../middlewares/authMiddleware');
 const orderController = require('../../modules/orders/order.controller');
 
 router.post('/', orderController.createOrder);
+router.get('/track/:orderNumber', orderController.trackOrder);
 
 router.use(authMiddleware.requireAuth);
 router.get('/', orderController.listOrders);

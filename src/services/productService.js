@@ -73,6 +73,22 @@ return {
   };
 
   /**
+   * Get single product by ID (admin)
+   */
+  exports.getProductById = async (id) => {
+    const product = await Product.findById(id)
+      .populate('category', 'name slug');
+
+    if (!product) {
+      const error = new Error('Product not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    return product;
+  };
+
+  /**
    * Get featured products
    */
   exports.getFeaturedProducts = async (limit = 6) => {

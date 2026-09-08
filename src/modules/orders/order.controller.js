@@ -34,6 +34,17 @@ exports.getOrderById = async (req, res, next) => {
   }
 };
 
+exports.trackOrder = async (req, res, next) => {
+  try {
+    const { orderNumber } = req.params;
+    const { phone } = req.query;
+    const order = await orderService.trackOrder(orderNumber, phone);
+    res.json({ success: true, data: order });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.listOrders = async (req, res, next) => {
   try {
     const filters = {

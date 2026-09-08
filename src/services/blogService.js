@@ -81,6 +81,23 @@ exports.getBlogBySlug = async (slug) => {
 };
 
 /**
+ * Get single blog by ID (admin)
+ */
+exports.getBlogById = async (id) => {
+  const blog = await Blog.findById(id)
+    .populate('category', 'name slug')
+    .populate('created_by', 'name');
+
+  if (!blog) {
+    const error = new Error('Blog not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return blog;
+};
+
+/**
  * Get featured blogs
  */
 exports.getFeaturedBlogs = async (limit = 3) => {

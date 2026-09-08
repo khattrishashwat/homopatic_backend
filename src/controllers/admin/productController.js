@@ -27,6 +27,18 @@ exports.getProductBySlug = async (req, res, next) => {
 };
 
 /**
+ * Get product by ID (admin)
+ */
+exports.getProductById = async (req, res, next) => {
+  try {
+    const product = await productService.getProductById(req.params.id);
+    res.json({ success: true, data: product });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get featured products (public API)
  */
 exports.getFeaturedProducts = async (req, res, next) => {

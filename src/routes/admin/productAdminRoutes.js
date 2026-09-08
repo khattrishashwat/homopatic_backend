@@ -15,6 +15,7 @@ router.post(
 );
 router.get('/', productController.getAdminProducts);
 router.get('/admin/list', productController.getAdminProducts);
+router.get('/:id', productController.getProductById);
 router.patch(
   '/:id',
   multer.fields([

@@ -9,11 +9,12 @@ exports.createOrder = async (data) => {
   let subtotal = 0;
 
   for (const item of data.items) {
-    const product = item.productId
+    const isValidId = item.productId && /^[0-9a-fA-F]{24}$/.test(String(item.productId));
+    const product = isValidId
       ? await Product.findById(item.productId)
       : await Product.findOne({ slug: item.productSlug });
     if (!product) {
-      const error = new Error(`Product not found: ${item.productId}`);
+      const error = new Error(`Product not found: ${item.productId || item.productSlug}`);
       error.statusCode = 404;
       throw error;
     }
@@ -56,6 +57,20 @@ exports.createOrder = async (data) => {
 
 exports.getOrderById = async (id) => {
   const order = await Order.findById(id).populate('items.product payment user');
+  if (!order) {
+    const error = new Error('Order not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  return order;
+};
+
+exports.trackOrder = async (orderNumber, phone) => {
+  const query = { order_number: orderNumber };
+  if (phone) {
+    query.customer_phone = phone.trim();
+  }
+  const order = await Order.findOne(query).populate('items.product payment');
   if (!order) {
     const error = new Error('Order not found');
     error.statusCode = 404;
