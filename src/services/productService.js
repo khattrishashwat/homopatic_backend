@@ -21,11 +21,14 @@
     if (filters.search) {
       query.$text = { $search: filters.search };
     }
-    if (filters.featured) {
-      query.featured = true;
+    if (filters.featured !== undefined) {
+      query.featured = filters.featured === 'true' || filters.featured === true;
+    }
+    if (filters.recommended !== undefined) {
+      query.recommended = filters.recommended === 'true' || filters.recommended === true;
     }
     if (filters.in_stock !== undefined) {
-      query.in_stock = filters.in_stock === 'true';
+      query.in_stock = filters.in_stock === 'true' || filters.in_stock === true;
     }
 
     const page = parseInt(filters.page) || 1;
@@ -141,6 +144,7 @@ exports.createProduct = async (data, userId) => {
     attributes: data.attributes || {},
     active: data.active !== undefined ? data.active : true,
     featured: data.featured || false,
+    recommended: data.recommended !== undefined ? (data.recommended === 'true' || data.recommended === true) : false,
     created_by: userId,
   };
 
@@ -189,6 +193,7 @@ exports.createProduct = async (data, userId) => {
     "attributes",
     "active",
     "featured",
+    "recommended",
   ];
 
   updateFields.forEach((field) => {

@@ -19,6 +19,7 @@ const webAuthRoutes = require('./routes/web/authRoutes');
 const webContactRoutes = require('./routes/web/contactRoutes');
 const webGoogleReviewsRoutes = require('./routes/web/googleReviewsRoutes');
 const webReviewRoutes = require('./routes/web/reviewRoutes');
+const webChatRoutes = require('./routes/web/chatRoutes');
 
 // Admin Routes
 const appointmentAdminRoutes = require('./routes/admin/appointmentAdminRoutes');
@@ -34,6 +35,7 @@ const paymentAdminRoutes = require('./routes/admin/paymentAdminRoutes');
 const productAdminRoutes = require('./routes/admin/productAdminRoutes');
 const blogAdminRoutes = require('./routes/admin/blogAdminRoutes');
 const categoryAdminRoutes = require('./routes/admin/categoryAdminRoutes');
+const reviewAdminRoutes = require('./routes/admin/reviewAdminRoutes');
 
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
@@ -65,6 +67,8 @@ app.use('/api/web/payments', webPaymentRoutes);
 app.use('/api/web/auth', webAuthRoutes);
 app.use('/api/web/contacts', webContactRoutes);
 app.use('/api/web/google-reviews', webGoogleReviewsRoutes);
+app.use('/api/web/chat', webChatRoutes);
+app.use('/api/chat', webChatRoutes);
 app.use('/api/web', webReviewRoutes);
 app.use('/api', webReviewRoutes);
 app.use('/api/auth', webAuthRoutes);
@@ -83,6 +87,7 @@ app.use('/api/admin/payments', paymentAdminRoutes);
 app.use('/api/admin/products', productAdminRoutes);
 app.use('/api/admin/blogs', blogAdminRoutes);
 app.use('/api/admin/categories', categoryAdminRoutes);
+app.use('/api/admin/reviews', reviewAdminRoutes);
 
 // SEO Public Routes
 app.use('/api/blog', webBlogRoutes);

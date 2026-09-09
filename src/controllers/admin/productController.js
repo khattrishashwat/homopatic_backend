@@ -69,6 +69,7 @@ exports.createProduct = async (req, res, next) => {
       attributes: req.body.attributes ? JSON.parse(req.body.attributes) : {},
       active: req.body.active === 'true' || req.body.active === true,
       featured: req.body.featured === 'true' || req.body.featured === true,
+      recommended: req.body.recommended === 'true' || req.body.recommended === true,
     };
 
     // Handle image upload
@@ -119,6 +120,9 @@ exports.updateProduct = async (req, res, next) => {
     }
     if (req.body.featured !== undefined) {
       updates.featured = req.body.featured === 'true' || req.body.featured === true;
+    }
+    if (req.body.recommended !== undefined) {
+      updates.recommended = req.body.recommended === 'true' || req.body.recommended === true;
     }
 
     // Handle image upload

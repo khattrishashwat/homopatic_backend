@@ -46,6 +46,18 @@ const SiteSettingsSchema = new mongoose.Schema({
     enable_sms: { type: Boolean, default: true },
     enable_whatsapp: { type: Boolean, default: true },
   },
+  chatbot_settings: {
+    enabled: { type: Boolean, default: true },
+    welcome_message: {
+      type: String,
+      default: "Hi! 👋 Welcome to MD's Homoeopathy. How can I assist your health journey today?",
+    },
+    suggested_questions: [
+      {
+        type: String,
+      },
+    ],
+  },
   updated_at: { type: Date, default: Date.now },
   updated_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 });

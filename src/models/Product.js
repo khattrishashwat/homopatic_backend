@@ -94,6 +94,12 @@ const ProductSchema = new mongoose.Schema(
       default: false,
     },
 
+    recommended: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     // Audit
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
@@ -118,6 +124,7 @@ ProductSchema.index({
 ProductSchema.index({ slug: 1 });
 ProductSchema.index({ category: 1 });
 ProductSchema.index({ active: 1, featured: 1 });
+ProductSchema.index({ active: 1, recommended: 1 });
 
 /**
  * Generate unique slug

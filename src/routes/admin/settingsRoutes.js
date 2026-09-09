@@ -31,4 +31,8 @@ router.patch('/payment', settingsController.updatePaymentSettings);
 router.get('/notification', settingsController.getNotificationSettings);
 router.patch('/notification', settingsController.updateNotificationSettings);
 
+// Chatbot settings
+router.get('/chatbot', settingsController.getChatbotSettings);
+router.patch('/chatbot', settingsController.updateChatbotSettings);
+
 module.exports = router;
