@@ -74,6 +74,7 @@ app.use('/api', webReviewRoutes);
 app.use('/api/auth', webAuthRoutes);
 
 // Admin Routes
+app.use('/api/admin/auth', webAuthRoutes);
 app.use('/api/admin/appointments', appointmentAdminRoutes);
 app.use('/api/admin/slots', slotAdminRoutes);
 app.use('/api/admin/dashboard', dashboardAdminRoutes);
