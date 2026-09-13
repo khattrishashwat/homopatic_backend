@@ -4,19 +4,58 @@ const validation = require('./appointment.validation');
 exports.createAppointment = async (req, res, next) => {
   try {
     validation.validateCreateAppointment(req.body);
-    const appointment = await appointmentService.createAppointment({
+    const result = await appointmentService.createAppointment({
       userId: req.user?._id,
       patientId: req.body.patientId,
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      slotId: req.body.slotId,
-      reason: req.body.reason,
-      consultationType: req.body.consultation_type || req.body.consultationType,
+      name: req.body.name || req.body.patientName,
+      email: req.body.email || req.body.patientEmail,
+      phone: req.body.phone || req.body.patientPhone,
+      slotId: req.body.slotId || req.body.slot,
+      reason: req.body.reason || req.body.concern,
+      concern: req.body.concern || req.body.reason,
+      customConcern: req.body.customConcern,
+      city: req.body.city,
+      age: req.body.age,
+      consultationType: req.body.consultation_type || req.body.consultationType || req.body.consultationMode,
+      paymentMethod: req.body.paymentMethod || req.body.payment_method,
       paymentStatus: req.body.payment_status || req.body.paymentStatus,
+      amount: req.body.amount,
       notes: req.body.notes,
     });
-    res.status(201).json({ success: true, data: appointment });
+
+    const appointment = result.appointment || result;
+    res.status(201).json({
+      success: true,
+      data: appointment,
+      razorpayOrder: result.razorpayOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyPayment = async (req, res, next) => {
+  try {
+    const { appointmentId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!appointmentId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: 'appointmentId, razorpay_order_id, razorpay_payment_id, and razorpay_signature are required',
+      });
+    }
+
+    const appointment = await appointmentService.verifyAppointmentPayment({
+      appointmentId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    });
+
+    res.json({
+      success: true,
+      data: appointment,
+      message: 'Payment verified and appointment confirmed successfully',
+    });
   } catch (error) {
     next(error);
   }

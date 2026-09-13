@@ -13,4 +13,5 @@ module.exports = {
   markAppointmentMissed: appointmentService.markAppointmentMissed,
   countAppointments: appointmentService.countAppointments,
   getAppointmentsByPatient: appointmentService.getAppointmentsByPatient,
+  verifyAppointmentPayment: appointmentService.verifyAppointmentPayment,
 };

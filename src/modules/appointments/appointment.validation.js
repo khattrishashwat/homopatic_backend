@@ -1,18 +1,38 @@
 exports.validateCreateAppointment = (payload) => {
-  if (!payload.name) {
+  if (!payload.name || !payload.name.trim()) {
     const error = new Error('Patient name is required');
     error.statusCode = 400;
     throw error;
   }
 
-  if (!payload.slotId) {
+  if (!payload.slotId && !payload.slot) {
     const error = new Error('Slot ID is required');
     error.statusCode = 400;
     throw error;
   }
 
-  if (!payload.email && !payload.phone) {
-    const error = new Error('Either email or phone is required');
+  if (!payload.phone && !payload.email) {
+    const error = new Error('Phone number is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const concern = payload.concern || payload.reason;
+  if (!concern || !concern.trim()) {
+    const error = new Error('Health concern is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (concern === 'Other' && (!payload.customConcern || !payload.customConcern.trim())) {
+    const error = new Error('Please describe your custom concern');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const paymentMethod = (payload.paymentMethod || payload.payment_method || 'offline').toLowerCase();
+  if (!['online', 'offline'].includes(paymentMethod)) {
+    const error = new Error('Payment method must be online or offline');
     error.statusCode = 400;
     throw error;
   }

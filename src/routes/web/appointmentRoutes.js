@@ -4,6 +4,7 @@ const authMiddleware = require('../../middlewares/authMiddleware');
 const appointmentController = require('../../modules/appointments/appointment.controller');
 
 router.post('/', appointmentController.createAppointment);
+router.post('/verify-payment', appointmentController.verifyPayment);
 
 router.use(authMiddleware.requireAuth);
 router.get('/', appointmentController.getUserAppointments);
