@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 // Website API Routes
 const webAppointmentRoutes = require('./routes/web/appointmentRoutes');
@@ -105,6 +106,57 @@ app.use('/api/category', webCategoryRoutes);
 
 // SEO Routes (sitemap, robots)
 app.use('/api/seo', seoRoutes);
+
+// Frontend Production Build Paths
+const webDistCandidates = [
+  path.resolve(__dirname, '../../web/dist'),
+];
+const webDistPath = webDistCandidates.find((dir) => fs.existsSync(dir))
+  || (fs.existsSync(path.resolve(__dirname, '../../web'))
+    ? path.resolve(__dirname, '../../web/dist')
+    : path.resolve(__dirname, '../../web/dist'));
+
+const adminDistCandidates = [
+  path.resolve(__dirname, '../../admin-panel/dist'),
+  path.resolve(__dirname, '../admin-panel/dist'),
+];
+const adminDistPath = adminDistCandidates.find((dir) => fs.existsSync(dir))
+  || path.resolve(__dirname, '../../admin-panel/dist');
+
+// Serve Web Frontend static assets
+app.use('/web', express.static(webDistPath));
+if (fs.existsSync(path.resolve(__dirname, '../../web/dist')) && webDistPath !== path.resolve(__dirname, '../../web/dist')) {
+  app.use('/web', express.static(path.resolve(__dirname, '../../web/dist')));
+}
+
+// Serve Admin Panel Frontend static assets
+app.use('/admin-panel', express.static(adminDistPath));
+
+// React SPA Fallback for Web Frontend
+app.get(['/web', '/web/*'], (req, res) => {
+  const indexPath = [
+    path.join(webDistPath, 'index.html'),
+    path.resolve(__dirname, '../../web/dist/index.html'),
+  ].find((p) => fs.existsSync(p));
+
+  if (indexPath) {
+    return res.sendFile(indexPath);
+  }
+  return res.status(404).send('Web frontend build not found. Please build the frontend first.');
+});
+
+// React SPA Fallback for Admin Panel Frontend
+app.get(['/admin-panel', '/admin-panel/*'], (req, res) => {
+  const indexPath = [
+    path.join(adminDistPath, 'index.html'),
+    path.resolve(__dirname, '../../admin-panel/dist/index.html'),
+  ].find((p) => fs.existsSync(p));
+
+  if (indexPath) {
+    return res.sendFile(indexPath);
+  }
+  return res.status(404).send('Admin Panel frontend build not found. Please build the frontend first.');
+});
 
 app.use(errorMiddleware);
 
