@@ -60,6 +60,24 @@ const ReviewSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    googleReviewId: {
+      type: String,
+      trim: true,
+      index: true,
+      sparse: true,
+    },
+    source: {
+      type: String,
+      trim: true,
+      default: 'google',
+    },
+    reviewDate: {
+      type: Date,
+    },
+    reply: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

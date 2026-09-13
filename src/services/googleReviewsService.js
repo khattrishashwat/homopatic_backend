@@ -19,14 +19,22 @@ const mapGoogleReview = (review) => ({
 
 const mapDbReview = (review) => ({
   id: review._id.toString(),
+  googleReviewId: review.googleReviewId || null,
   reviewerName: review.name,
   rating: review.rating || 5,
   text: review.message,
   profileImage: review.profileImage || '',
-  relativeTime: review.relativeTime || (review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Recent review'),
-  reviewDate: review.createdAt ? review.createdAt.toISOString() : null,
+  relativeTime: review.relativeTime || (review.reviewDate ? new Date(review.reviewDate).toLocaleDateString() : (review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Recent review')),
+  reviewDate: review.reviewDate ? review.reviewDate.toISOString() : (review.createdAt ? review.createdAt.toISOString() : null),
   authorUrl: review.target_slug || '',
+  source: review.source || 'curated',
+  reply: review.reply || null,
 });
+
+exports.clearCache = () => {
+  cachedPayload = null;
+  cachedAt = 0;
+};
 
 exports.getGoogleReviews = async ({ forceRefresh = false } = {}) => {
   const now = Date.now();

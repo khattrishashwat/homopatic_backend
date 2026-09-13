@@ -1,4 +1,6 @@
 const Review = require('../../models/Review');
+const reviewService = require('../../services/reviewService');
+const googleReviewsService = require('../../services/googleReviewsService');
 
 /**
  * Get all reviews (admin) with filtering and pagination
@@ -56,32 +58,58 @@ exports.createReview = async (req, res, next) => {
       target_slug,
       title,
       name,
+      reviewer_name,
       email,
+      reviewer_email,
       rating = 5,
       message,
+      comment,
       profileImage,
       relativeTime,
       order = 0,
       approved = true,
+      googleReviewId,
+      reviewDate,
+      source = 'google',
+      reply,
     } = req.body;
 
-    if (!name || !message) {
+    const finalName = (name || reviewer_name || '').trim();
+    const finalMessage = (message || comment || '').trim();
+    const finalEmail = (email || reviewer_email || '').trim();
+
+    if (!finalName || !finalMessage) {
       return res.status(400).json({ success: false, message: 'Name and message are required' });
     }
 
-    const review = await Review.create({
+    const reviewData = {
       type,
       target_slug: target_slug || '',
       title: title || '',
-      name: name.trim(),
-      email: email ? email.trim() : undefined,
+      name: finalName,
+      email: finalEmail || undefined,
       rating: Number(rating) || 5,
-      message: message.trim(),
+      message: finalMessage,
       profileImage: profileImage || '',
       relativeTime: relativeTime || 'Recent review',
       order: Number(order) || 0,
       approved: approved === 'true' || approved === true,
-    });
+      source,
+    };
+
+    if (googleReviewId) reviewData.googleReviewId = googleReviewId.trim();
+    if (reviewDate) {
+      const parsed = new Date(reviewDate);
+      if (!isNaN(parsed.getTime())) {
+        reviewData.reviewDate = parsed;
+        reviewData.createdAt = parsed;
+      }
+    }
+    if (reply) reviewData.reply = reply.trim();
+
+    const review = await Review.create(reviewData);
+
+    googleReviewsService.clearCache();
 
     res.status(201).json({ success: true, data: review });
   } catch (error) {
@@ -106,13 +134,20 @@ exports.updateReview = async (req, res, next) => {
       'target_slug',
       'title',
       'name',
+      'reviewer_name',
       'email',
+      'reviewer_email',
       'rating',
       'message',
+      'comment',
       'profileImage',
       'relativeTime',
       'order',
       'approved',
+      'googleReviewId',
+      'reviewDate',
+      'source',
+      'reply',
     ];
 
     allowed.forEach((field) => {
@@ -121,6 +156,17 @@ exports.updateReview = async (req, res, next) => {
           review[field] = Number(req.body[field]);
         } else if (field === 'approved') {
           review[field] = req.body[field] === 'true' || req.body[field] === true;
+        } else if (field === 'reviewer_name') {
+          review.name = req.body[field];
+        } else if (field === 'comment') {
+          review.message = req.body[field];
+        } else if (field === 'reviewer_email') {
+          review.email = req.body[field];
+        } else if (field === 'reviewDate') {
+          const parsed = new Date(req.body[field]);
+          if (!isNaN(parsed.getTime())) {
+            review.reviewDate = parsed;
+          }
         } else {
           review[field] = req.body[field];
         }
@@ -128,6 +174,8 @@ exports.updateReview = async (req, res, next) => {
     });
 
     await review.save();
+    googleReviewsService.clearCache();
+
     res.json({ success: true, data: review });
   } catch (error) {
     next(error);
@@ -146,8 +194,32 @@ exports.deleteReview = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Review not found' });
     }
 
+    googleReviewsService.clearCache();
+
     res.json({ success: true, message: 'Review deleted successfully' });
   } catch (error) {
     next(error);
   }
 };
+
+/**
+ * Bulk upload Google Reviews (admin)
+ */
+exports.bulkUploadReviews = async (req, res, next) => {
+  try {
+    const reviews = Array.isArray(req.body) ? req.body : req.body?.reviews;
+
+    if (!Array.isArray(reviews)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payload: expected an array of reviews or { reviews: [...] }',
+      });
+    }
+
+    const result = await reviewService.bulkUploadReviews(reviews);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
