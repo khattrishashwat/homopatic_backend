@@ -18,11 +18,13 @@ const BlogSchema = new mongoose.Schema(
 
     slug: {
       type: String,
-      required: true,
       unique: true,
       lowercase: true,
       trim: true,
       index: true,
+      default: function () {
+        return slugify(this.title) || `blog-${Date.now()}`;
+      },
     },
 
     excerpt: {
@@ -118,8 +120,25 @@ const BlogSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        if (!ret.image && ret.featured_image) ret.image = ret.featured_image;
+        if (!ret.imageUrl && ret.featured_image) ret.imageUrl = ret.featured_image;
+        return ret;
+      },
+    },
+    toObject: { virtuals: true },
   }
 );
+
+BlogSchema.virtual('image').get(function () {
+  return this.featured_image;
+});
+
+BlogSchema.virtual('imageUrl').get(function () {
+  return this.featured_image;
+});
 
 BlogSchema.index({
   title: "text",
@@ -139,26 +158,8 @@ BlogSchema.index({
   published_at: -1,
 });
 
-// Auto-generate slug and reading_time before saving
-BlogSchema.pre('save', function(next) {
-  // Auto-generate slug from title if not provided
-  if (this.isModified('title') && !this.isModified('slug')) {
-    let baseSlug = slugify(this.title);
-    this.slug = this.ensureUniqueSlug(baseSlug);
-  }
-
-  // Auto-calculate reading time if content changed and not set
-  if (this.isModified('content') && !this.isModified('reading_time')) {
-    const wordsPerMinute = 200;
-    const wordCount = (this.content || '').trim().split(/\s+/).length;
-    this.reading_time = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-  }
-
-  next();
-});
-
 BlogSchema.methods.ensureUniqueSlug = async function(baseSlug) {
-  let slug = baseSlug;
+  let slug = baseSlug || `blog-${Date.now()}`;
   let counter = 1;
   while (true) {
     const existing = await this.constructor.findOne({ slug, _id: { $ne: this._id } });
@@ -167,5 +168,23 @@ BlogSchema.methods.ensureUniqueSlug = async function(baseSlug) {
   }
   return slug;
 };
+
+// Auto-generate slug and reading_time before validation
+BlogSchema.pre('validate', async function() {
+  // Auto-generate slug from title if not provided or empty
+  if (!this.slug && this.title) {
+    let baseSlug = slugify(this.title) || `blog-${Date.now()}`;
+    this.slug = await this.ensureUniqueSlug(baseSlug);
+  } else if (this.slug) {
+    this.slug = slugify(this.slug);
+  }
+
+  // Auto-calculate reading time if content changed and not set
+  if (this.content && !this.reading_time) {
+    const wordsPerMinute = 200;
+    const wordCount = (this.content || '').trim().split(/\s+/).filter(Boolean).length;
+    this.reading_time = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+  }
+});
 
 module.exports = mongoose.model("Blog", BlogSchema);

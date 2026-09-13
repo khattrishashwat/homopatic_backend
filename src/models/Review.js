@@ -81,8 +81,37 @@ const ReviewSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        ret.review_type = ret.review_type || ret.type;
+        ret.reviewer_name = ret.reviewer_name || ret.name;
+        ret.reviewer_email = ret.reviewer_email || ret.email;
+        ret.comment = ret.comment || ret.message;
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+    },
   }
 );
+
+ReviewSchema.virtual('review_type').get(function () {
+  return this.type;
+});
+
+ReviewSchema.virtual('reviewer_name').get(function () {
+  return this.name;
+});
+
+ReviewSchema.virtual('reviewer_email').get(function () {
+  return this.email;
+});
+
+ReviewSchema.virtual('comment').get(function () {
+  return this.message;
+});
 
 ReviewSchema.index({ type: 1, target_slug: 1, createdAt: -1 });
 ReviewSchema.index({ type: 1, approved: 1, order: 1, createdAt: -1 });

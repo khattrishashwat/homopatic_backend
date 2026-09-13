@@ -133,37 +133,54 @@ exports.getRelatedBlogs = async (blogId, limit = 3) => {
  * Create blog (admin)
  */
 exports.createBlog = async (data, userId) => {
-  // Generate slug
-  const blogSlug = slugify(data.title);
-
-  // Check slug uniqueness
-  const existing = await Blog.findOne({ slug: blogSlug });
-  if (existing) {
-    const error = new Error('Blog with this title already exists');
+  if (!data.title || !String(data.title).trim()) {
+    const error = new Error('Title is required');
     error.statusCode = 400;
     throw error;
+  }
+
+  // Generate slug
+  let blogSlug = data.slug ? slugify(data.slug) : slugify(data.title);
+  if (!blogSlug) {
+    blogSlug = `blog-${Date.now()}`;
+  }
+
+  // Ensure unique slug
+  let slug = blogSlug;
+  let counter = 1;
+  while (true) {
+    const existing = await Blog.findOne({ slug });
+    if (!existing) break;
+    slug = `${blogSlug}-${counter++}`;
   }
 
   // Calculate reading time if content provided
   const readingTime = data.reading_time || calculateReadingTime(data.content);
 
+  const excerptText = (data.excerpt && String(data.excerpt).trim())
+    ? String(data.excerpt).trim()
+    : (data.content ? String(data.content).replace(/<[^>]*>/g, '').slice(0, 200).trim() : 'Overview');
+
+  const contentText = (data.content && String(data.content).trim())
+    ? String(data.content).trim()
+    : excerptText;
+
   const blog = await Blog.create({
-    title: data.title,
-    slug: blogSlug,
-    excerpt: data.excerpt,
-    content: data.content,
+    title: String(data.title).trim(),
+    slug,
+    excerpt: excerptText,
+    content: contentText,
     category: data.category || null,
-    tags: data.tags || [],
+    tags: Array.isArray(data.tags) ? data.tags : [],
     featured_image: data.featured_image,
     featured_image_path: data.featured_image_path,
-    featured_image_alt: data.featured_image_alt,
     featured_image_alt: data.featured_image_alt,
     author: data.author || 'Homeopathy Team',
     author_bio: data.author_bio,
     reading_time: readingTime,
-    published: data.published || false,
+    published: Boolean(data.published),
     published_at: data.published ? new Date() : null,
-    featured: data.featured || false,
+    featured: Boolean(data.featured),
     created_by: userId,
   });
 
@@ -196,7 +213,8 @@ exports.updateBlog = async (id, data, userId) => {
   // Update allowed fields
   const updateFields = [
     'title', 'excerpt', 'content', 'category', 'tags',
-    'featured_image_alt', 'author', 'author_bio'
+    'featured_image', 'featured_image_path', 'featured_image_alt',
+    'author', 'author_bio'
   ];
 
   // Update reading time if content changed

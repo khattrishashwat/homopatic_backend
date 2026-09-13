@@ -7,11 +7,12 @@ const googleReviewsService = require('../../services/googleReviewsService');
  */
 exports.getAllReviews = async (req, res, next) => {
   try {
-    const { type, approved, search, page = 1, limit = 20 } = req.query;
+    const { type, review_type, approved, search, page = 1, limit = 20 } = req.query;
     const query = {};
 
-    if (type) {
-      query.type = type;
+    const targetType = type || review_type;
+    if (targetType && targetType !== 'all') {
+      query.type = targetType;
     }
     if (approved !== undefined) {
       query.approved = approved === 'true' || approved === true;
@@ -54,7 +55,8 @@ exports.getAllReviews = async (req, res, next) => {
 exports.createReview = async (req, res, next) => {
   try {
     const {
-      type = 'google_review',
+      type,
+      review_type = 'google_review',
       target_slug,
       title,
       name,
@@ -74,6 +76,7 @@ exports.createReview = async (req, res, next) => {
       reply,
     } = req.body;
 
+    const finalType = type || review_type || 'google_review';
     const finalName = (name || reviewer_name || '').trim();
     const finalMessage = (message || comment || '').trim();
     const finalEmail = (email || reviewer_email || '').trim();
@@ -83,7 +86,7 @@ exports.createReview = async (req, res, next) => {
     }
 
     const reviewData = {
-      type,
+      type: finalType,
       target_slug: target_slug || '',
       title: title || '',
       name: finalName,
@@ -131,6 +134,7 @@ exports.updateReview = async (req, res, next) => {
 
     const allowed = [
       'type',
+      'review_type',
       'target_slug',
       'title',
       'name',
@@ -156,12 +160,14 @@ exports.updateReview = async (req, res, next) => {
           review[field] = Number(req.body[field]);
         } else if (field === 'approved') {
           review[field] = req.body[field] === 'true' || req.body[field] === true;
-        } else if (field === 'reviewer_name') {
+        } else if (field === 'reviewer_name' || field === 'name') {
           review.name = req.body[field];
-        } else if (field === 'comment') {
+        } else if (field === 'comment' || field === 'message') {
           review.message = req.body[field];
-        } else if (field === 'reviewer_email') {
+        } else if (field === 'reviewer_email' || field === 'email') {
           review.email = req.body[field];
+        } else if (field === 'review_type' || field === 'type') {
+          review.type = req.body[field];
         } else if (field === 'reviewDate') {
           const parsed = new Date(req.body[field]);
           if (!isNaN(parsed.getTime())) {
