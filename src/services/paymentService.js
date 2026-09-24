@@ -8,32 +8,37 @@ const hasRealRazorpay = () =>
   !process.env.RAZORPAY_KEY_ID.includes('your_') &&
   !process.env.RAZORPAY_KEY_SECRET.includes('your_');
 
-let razorpay = null;
-if (hasRealRazorpay()) {
-  razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
-}
+const getRazorpayInstance = () => {
+  if (hasRealRazorpay()) {
+    return new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return null;
+};
 
 exports.createOrder = async (data) => {
   try {
     const amountInPaise = Math.round(Number(data.amount) * 100);
+    const receiptId = data.receipt || (data.orderId ? `ord_${String(data.orderId).slice(-10)}_${Date.now().toString().slice(-4)}` : `apt_${Date.now().toString().slice(-8)}`);
     const options = {
       amount: amountInPaise,
       currency: 'INR',
-      receipt: `appointment_${Date.now()}`,
-      description: data.description || 'Appointment Payment',
+      receipt: receiptId,
+      description: data.description || (data.orderId ? 'Product Order Payment' : 'Appointment Payment'),
       customer_notify: 1,
       notes: {
-        appointment_id: String(data.appointmentId || ''),
+        ...(data.appointmentId ? { appointment_id: String(data.appointmentId) } : {}),
+        ...(data.orderId ? { order_id: String(data.orderId) } : {}),
         user_id: String(data.userId || ''),
       },
     };
 
     let orderId;
-    if (hasRealRazorpay() && razorpay) {
-      const razorpayOrder = await razorpay.orders.create(options);
+    const rzp = getRazorpayInstance();
+    if (rzp) {
+      const razorpayOrder = await rzp.orders.create(options);
       orderId = razorpayOrder.id;
     } else {
       orderId = `order_mock_${Date.now()}_${Math.random().toString(36).slice(-4)}`;
@@ -46,9 +51,10 @@ exports.createOrder = async (data) => {
       user: data.userId || undefined,
       patient: data.patientId || undefined,
       appointment: data.appointmentId || undefined,
+      order: data.orderId || undefined,
       amount: data.amount,
       currency: 'INR',
-      description: data.description || 'Appointment Payment',
+      description: data.description || (data.orderId ? 'Product Order Payment' : 'Appointment Payment'),
       customer_name: data.customerName,
       customer_email: data.customerEmail,
       customer_phone: data.customerPhone,
@@ -71,7 +77,7 @@ exports.createOrder = async (data) => {
 
 exports.verifyPayment = async (data) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = data;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId, orderId } = data;
 
     if (hasRealRazorpay()) {
       const generatedSignature = crypto
@@ -87,9 +93,10 @@ exports.verifyPayment = async (data) => {
     }
 
     let paymentMethod = 'online';
-    if (hasRealRazorpay() && razorpay) {
+    const rzp = getRazorpayInstance();
+    if (rzp) {
       try {
-        const paymentDetails = await razorpay.payments.fetch(razorpay_payment_id);
+        const paymentDetails = await rzp.payments.fetch(razorpay_payment_id);
         if (paymentDetails?.method) {
           paymentMethod = paymentDetails.method;
         }
@@ -103,12 +110,16 @@ exports.verifyPayment = async (data) => {
     if (!payment && appointmentId) {
       payment = await Payment.findOne({ appointment: appointmentId });
     }
+    if (!payment && orderId) {
+      payment = await Payment.findOne({ order: orderId });
+    }
 
     if (payment) {
       payment.razorpay_payment_id = razorpay_payment_id;
       payment.razorpay_signature = razorpay_signature;
       payment.status = 'captured';
       payment.payment_method = paymentMethod;
+      if (orderId && !payment.order) payment.order = orderId;
       payment.updated_at = new Date();
       await payment.save();
     } else {
@@ -117,7 +128,8 @@ exports.verifyPayment = async (data) => {
         razorpay_payment_id,
         razorpay_signature,
         appointment: appointmentId,
-        amount: data.amount || 500,
+        order: orderId,
+        amount: data.amount || 0,
         currency: 'INR',
         status: 'captured',
         payment_method: paymentMethod,

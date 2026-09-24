@@ -7,6 +7,7 @@ const PaymentSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient' },
   appointment: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' },
+  order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   amount: { type: Number, required: true },
   currency: { type: String, default: 'INR' },
   description: { type: String },

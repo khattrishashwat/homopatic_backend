@@ -28,6 +28,10 @@ const ProductSchema = new mongoose.Schema(
       type: String,
     },
 
+    whyWeChooseThis: {
+      type: String,
+    },
+
     // Pricing
     price: {
       type: Number,

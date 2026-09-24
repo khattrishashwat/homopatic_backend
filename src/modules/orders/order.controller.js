@@ -4,12 +4,14 @@ const validation = require('./order.validation');
 exports.createOrder = async (req, res, next) => {
   try {
     validation.validateOrderPayload(req.body);
-    const order = await orderService.createOrder({
+    const result = await orderService.createOrder({
       userId: req.user?._id,
       items: req.body.items,
       tax: req.body.tax,
       shipping_cost: req.body.shipping_cost,
       discount: req.body.discount,
+      coupon_code: req.body.coupon_code || req.body.couponCode || req.body.coupon,
+      payment_method: req.body.payment_method || req.body.paymentMethod,
       customer_name: req.body.customer_name,
       customer_email: req.body.customer_email,
       customer_phone: req.body.customer_phone,
@@ -19,7 +21,35 @@ exports.createOrder = async (req, res, next) => {
       order_status: req.body.order_status,
       payment_status: req.body.payment_status,
     });
-    res.status(201).json({ success: true, data: order });
+    res.status(201).json({
+      success: true,
+      data: result.order,
+      razorpayOrder: result.razorpayOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyOrderPayment = async (req, res, next) => {
+  try {
+    const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      const error = new Error('Missing payment verification parameters');
+      error.statusCode = 400;
+      throw error;
+    }
+    const order = await orderService.verifyOrderPayment({
+      orderId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    });
+    res.json({
+      success: true,
+      data: order,
+      message: 'Payment verified and order confirmed successfully',
+    });
   } catch (error) {
     next(error);
   }

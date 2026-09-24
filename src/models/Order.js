@@ -26,6 +26,13 @@ const OrderSchema = new mongoose.Schema({
     country: { type: String, default: 'India' },
   },
   payment: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' },
+  coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+  coupon_code: { type: String, uppercase: true, trim: true },
+  coupon_discount_type: { type: String },
+  coupon_discount_value: { type: Number },
+  razorpay_order_id: { type: String },
+  razorpay_payment_id: { type: String },
+  razorpay_signature: { type: String },
   order_status: {
     type: String,
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],

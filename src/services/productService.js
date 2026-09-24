@@ -133,6 +133,7 @@ exports.createProduct = async (data, userId) => {
     name: data.name,
     slug,
     description: data.description,
+    whyWeChooseThis: data.whyWeChooseThis !== undefined ? data.whyWeChooseThis : data.why_we_choose_this,
     price: data.price,
     compare_price: data.compare_price,
     category: data.category || null,
@@ -182,6 +183,7 @@ exports.createProduct = async (data, userId) => {
     "name",
     "slug",
     "description",
+    "whyWeChooseThis",
     "price",
     "compare_price",
     "category",
@@ -201,6 +203,20 @@ exports.createProduct = async (data, userId) => {
       product[field] = data[field];
     }
   });
+
+  if (data.whyWeChooseThis === undefined && data.why_we_choose_this !== undefined) {
+    product.whyWeChooseThis = data.why_we_choose_this;
+  }
+
+  if (product.compare_price === '' || product.compare_price === 'null') {
+    product.compare_price = null;
+  }
+  if (product.category === '' || product.category === 'null' || product.category === 'undefined') {
+    product.category = null;
+  }
+  if (product.sku === '' || product.sku === 'null') {
+    product.sku = null;
+  }
 
   // Auto stock status
   product.in_stock = product.stock > 0;

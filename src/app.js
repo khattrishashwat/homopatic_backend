@@ -25,6 +25,7 @@ const webGoogleReviewsRoutes = require('./routes/web/googleReviewsRoutes');
 const webReviewRoutes = require('./routes/web/reviewRoutes');
 const webChatRoutes = require('./routes/web/chatRoutes');
 const webFaqRoutes = require('./routes/web/faqRoutes');
+const webCouponRoutes = require('./routes/web/couponWebRoutes');
 
 // ======================================================
 // Admin Routes
@@ -47,6 +48,7 @@ const reviewAdminRoutes = require('./routes/admin/reviewAdminRoutes');
 const googleReviewsAdminRoutes = require('./routes/admin/googleReviewsAdminRoutes');
 const faqAdminRoutes = require('./routes/admin/faqAdminRoutes');
 const chatbotAdminRoutes = require('./routes/admin/chatbotAdminRoutes');
+const couponAdminRoutes = require('./routes/admin/couponAdminRoutes');
 
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
@@ -117,6 +119,8 @@ app.use('/api/chat', webChatRoutes);
 
 app.use('/api/web/faqs', webFaqRoutes);
 
+app.use('/api/web/coupons', webCouponRoutes);
+
 app.use('/api/web', webReviewRoutes);
 
 app.use('/api', webReviewRoutes);
@@ -162,6 +166,8 @@ app.use('/api/admin/google-reviews', googleReviewsAdminRoutes);
 app.use('/api/admin/faqs', faqAdminRoutes);
 
 app.use('/api/admin/chatbot/questions', chatbotAdminRoutes);
+
+app.use('/api/admin/coupons', couponAdminRoutes);
 
 // ======================================================
 // SEO Public Routes

@@ -59,6 +59,7 @@ exports.createProduct = async (req, res, next) => {
     const productData = {
       name: req.body.name,
       description: req.body.description,
+      whyWeChooseThis: req.body.whyWeChooseThis !== undefined ? req.body.whyWeChooseThis : req.body.why_we_choose_this,
       price: req.body.price,
       compare_price: req.body.compare_price,
       category: req.body.category,
@@ -104,14 +105,63 @@ exports.updateProduct = async (req, res, next) => {
 
     // Collect updates from body
     const fields = [
-      'name', 'slug', 'description',
+      'name', 'slug', 'description', 'whyWeChooseThis',
       'price', 'compare_price', 'category', 'stock', 'sku',
       'image_alt', 'attributes'
     ];
 
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    if (req.body.why_we_choose_this !== undefined && updates.whyWeChooseThis === undefined) {
+      updates.whyWeChooseThis = req.body.why_we_choose_this;
+    }
+
+    // Number conversions and cleanups
+    if (updates.price !== undefined && updates.price !== '') {
+      updates.price = Number(updates.price);
+    }
+    if (updates.compare_price !== undefined) {
+      updates.compare_price =
+        updates.compare_price === '' || updates.compare_price === null || updates.compare_price === 'null'
+          ? null
+          : Number(updates.compare_price);
+    }
+    if (updates.stock !== undefined && updates.stock !== '') {
+      updates.stock = Number(updates.stock);
+    }
+    if (updates.category !== undefined) {
+      updates.category =
+        updates.category === '' || updates.category === 'null' || updates.category === 'undefined'
+          ? null
+          : updates.category;
+    }
+    if (updates.sku !== undefined) {
+      updates.sku =
+        updates.sku === '' || updates.sku === null || String(updates.sku).trim() === ''
+          ? null
+          : String(updates.sku).trim();
+    }
+
+    // Attributes parsing
+    if (updates.attributes !== undefined && typeof updates.attributes === 'string') {
+      try {
+        updates.attributes = JSON.parse(updates.attributes);
+      } catch (e) {
+        // keep as is
+      }
+    }
+
     // Handle gallery
     if (req.body.gallery) {
-      updates.gallery = JSON.parse(String(req.body.gallery));
+      try {
+        updates.gallery = typeof req.body.gallery === 'string' ? JSON.parse(req.body.gallery) : req.body.gallery;
+      } catch (e) {
+        // ignore
+      }
     }
 
     // Handle booleans
@@ -133,9 +183,17 @@ exports.updateProduct = async (req, res, next) => {
     // Handle gallery uploads
     if (req.files && req.files.gallery) {
       const existingGallery = updates.gallery || (await Product.findById(productId))?.gallery || [];
+      let galleryAlts = {};
+      if (req.body.gallery_alts) {
+        try {
+          galleryAlts = typeof req.body.gallery_alts === 'string' ? JSON.parse(req.body.gallery_alts) : req.body.gallery_alts;
+        } catch (e) {
+          galleryAlts = {};
+        }
+      }
       const newGalleryItems = req.files.gallery.map((file) => ({
         url: `/uploads/${file.filename}`,
-        alt: req.body.gallery_alts ? JSON.parse(String(req.body.gallery_alts || '{}'))[file.filename] || '' : '',
+        alt: galleryAlts[file.filename] || '',
       }));
       updates.gallery = [...existingGallery, ...newGalleryItems];
     }
