@@ -4,6 +4,12 @@ const SlotSchema = new mongoose.Schema({
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
   available: { type: Boolean, default: true },
+  bookingType: {
+    type: String,
+    enum: ['online', 'offline', 'both'],
+    default: 'both',
+  },
+  durationMinutes: { type: Number, default: 30 },
   doctor: { type: String },
   createdAt: { type: Date, default: Date.now },
 });

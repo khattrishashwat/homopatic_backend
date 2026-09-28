@@ -121,10 +121,9 @@ exports.createOrder = async (data) => {
       };
     } catch (err) {
       console.error('[OrderService] Razorpay order creation failed:', err.message);
-      // Fallback: return created order without blocking
-      return {
-        order,
-      };
+      const error = new Error(`Payment gateway initialization failed: ${err.message}`);
+      error.statusCode = 502;
+      throw error;
     }
   }
 

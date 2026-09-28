@@ -30,9 +30,16 @@ exports.validateCreateAppointment = (payload) => {
     throw error;
   }
 
+  const consultationType = (payload.consultationType || payload.consultation_type || 'offline').toLowerCase();
   const paymentMethod = (payload.paymentMethod || payload.payment_method || 'offline').toLowerCase();
   if (!['online', 'offline'].includes(paymentMethod)) {
     const error = new Error('Payment method must be online or offline');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (consultationType === 'online' && paymentMethod === 'offline') {
+    const error = new Error('Online consultation requires online payment. Offline payment is only available for clinic visits.');
     error.statusCode = 400;
     throw error;
   }

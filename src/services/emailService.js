@@ -82,8 +82,16 @@ exports.sendAppointmentConfirmation = async (appointment, recipient, slot) => {
         
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
           <tr style="background: #f8fafc;">
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 40%;"><strong>Patient Name</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; width: 40%;"><strong>Booking Reference ID</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #059669;">#APPT-${String(appointment._id).slice(-8).toUpperCase()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;"><strong>Patient Name</strong></td>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${appointment.patientName}</td>
+          </tr>
+          <tr style="background: #f8fafc;">
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;"><strong>Email</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${appointment.patientEmail || toEmail}</td>
           </tr>
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;"><strong>Phone</strong></td>
@@ -107,10 +115,14 @@ exports.sendAppointmentConfirmation = async (appointment, recipient, slot) => {
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${slotTime}</td>
           </tr>
           <tr style="background: #f8fafc;">
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;"><strong>Slot Duration</strong></td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${slot?.durationMinutes || 30} Minutes</td>
+          </tr>
+          <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;"><strong>Payment Method</strong></td>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${paymentMethodText}</td>
           </tr>
-          <tr>
+          <tr style="background: #f8fafc;">
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;"><strong>Payment Status</strong></td>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${paymentStatusText}</td>
           </tr>

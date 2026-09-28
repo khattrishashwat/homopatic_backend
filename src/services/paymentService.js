@@ -2,17 +2,25 @@ const Payment = require('../models/Payment');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
-const hasRealRazorpay = () =>
-  process.env.RAZORPAY_KEY_ID &&
-  process.env.RAZORPAY_KEY_SECRET &&
-  !process.env.RAZORPAY_KEY_ID.includes('your_') &&
-  !process.env.RAZORPAY_KEY_SECRET.includes('your_');
+const getRazorpayKeyId = () => (process.env.RAZORPAY_KEY_ID || '').trim();
+const getRazorpayKeySecret = () => (process.env.RAZORPAY_KEY_SECRET || '').trim();
+
+const hasRealRazorpay = () => {
+  const keyId = getRazorpayKeyId();
+  const keySecret = getRazorpayKeySecret();
+  return Boolean(
+    keyId &&
+    keySecret &&
+    !keyId.includes('your_') &&
+    !keySecret.includes('your_')
+  );
+};
 
 const getRazorpayInstance = () => {
   if (hasRealRazorpay()) {
     return new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_id: getRazorpayKeyId(),
+      key_secret: getRazorpayKeySecret(),
     });
   }
   return null;
@@ -21,17 +29,17 @@ const getRazorpayInstance = () => {
 exports.createOrder = async (data) => {
   try {
     const amountInPaise = Math.round(Number(data.amount) * 100);
-    const receiptId = data.receipt || (data.orderId ? `ord_${String(data.orderId).slice(-10)}_${Date.now().toString().slice(-4)}` : `apt_${Date.now().toString().slice(-8)}`);
+    const rawReceipt = data.receipt || (data.orderId ? `ord_${String(data.orderId).slice(-10)}_${Date.now().toString().slice(-4)}` : `apt_${Date.now().toString().slice(-8)}`);
+    const receiptId = String(rawReceipt).slice(0, 40);
+
     const options = {
       amount: amountInPaise,
       currency: 'INR',
       receipt: receiptId,
-      description: data.description || (data.orderId ? 'Product Order Payment' : 'Appointment Payment'),
-      customer_notify: 1,
       notes: {
         ...(data.appointmentId ? { appointment_id: String(data.appointmentId) } : {}),
         ...(data.orderId ? { order_id: String(data.orderId) } : {}),
-        user_id: String(data.userId || ''),
+        ...(data.userId ? { user_id: String(data.userId) } : {}),
       },
     };
 
@@ -65,7 +73,7 @@ exports.createOrder = async (data) => {
       orderId,
       amount: data.amount,
       currency: 'INR',
-      key: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+      key: getRazorpayKeyId() || 'rzp_test_placeholder',
       paymentId: payment._id,
     };
   } catch (error) {
@@ -81,7 +89,7 @@ exports.verifyPayment = async (data) => {
 
     if (hasRealRazorpay()) {
       const generatedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+        .createHmac('sha256', getRazorpayKeySecret())
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest('hex');
 

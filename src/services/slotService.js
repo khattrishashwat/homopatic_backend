@@ -182,17 +182,14 @@ exports.createSlot = async (data) => {
   return Slot.create(data);
 };
 
-exports.getAllSlots = async () => {
-  return Slot.find({
-    $expr: { $in: [{ $dayOfWeek: '$startTime' }, [1, 7]] },
-  });
+const bookingScheduleService = require('./bookingScheduleService');
+
+exports.getAllSlots = async (filter = {}) => {
+  return Slot.find(filter).sort({ startTime: -1 });
 };
 
-exports.getAvailableSlots = async () => {
-  return Slot.find({
-    available: true,
-    $expr: { $in: [{ $dayOfWeek: '$startTime' }, [1, 7]] },
-  });
+exports.getAvailableSlots = async (query = {}) => {
+  return bookingScheduleService.getAvailableSlots(query);
 };
 
 exports.updateSlot = async (id, data) => {

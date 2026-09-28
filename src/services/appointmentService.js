@@ -105,7 +105,20 @@ exports.bookAppointment = async (data) => {
   }
 
   const consultationType = String(data.consultationType || data.consultation_type || 'offline').toLowerCase() === 'online' ? 'online' : 'offline';
+  if (slot.bookingType && slot.bookingType !== 'both' && slot.bookingType !== consultationType) {
+    const error = new Error(`This time slot is configured for ${slot.bookingType} bookings only.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
   const paymentMethod = String(data.paymentMethod || data.payment_method || 'offline').toLowerCase() === 'online' ? 'online' : 'offline';
+
+  if (consultationType === 'online' && paymentMethod !== 'online') {
+    const error = new Error('Online consultation requires online payment. Offline payment is only available for in-person clinic visits.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const isOnlinePayment = paymentMethod === 'online';
 
   const finalConcern = data.concern || data.reason || 'General Consultation';
