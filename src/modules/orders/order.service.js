@@ -3,6 +3,7 @@ const Product = require('../../models/Product');
 const Payment = require('../../models/Payment');
 const couponService = require('../../services/couponService');
 const paymentService = require('../../services/paymentService');
+const emailService = require('../../services/emailService');
 
 const buildOrderNumber = () => `ORD-${Date.now()}`;
 
@@ -33,7 +34,8 @@ exports.createOrder = async (data) => {
   }
 
   const tax = Number(data.tax || 0);
-  const shipping_cost = Number(data.shipping_cost || 0);
+  // Delivery cost is strictly 80 rupees for all product purchases
+  const shipping_cost = 80;
 
   // Validate coupon on backend (never trust frontend discount blindly)
   let discount = 0;
@@ -68,12 +70,19 @@ exports.createOrder = async (data) => {
 
   const total = Math.max(0, subtotal + tax + shipping_cost - discount);
 
+  const paymentMethodRaw = String(data.payment_method || 'online').toLowerCase();
   const isOnlinePayment =
-    data.payment_method === 'online' ||
-    data.payment_method === 'razorpay' ||
-    data.payment_method === 'UPI' ||
-    data.payment_method === 'Card' ||
-    data.payment_method === 'NetBanking';
+    paymentMethodRaw === 'online' ||
+    paymentMethodRaw === 'razorpay' ||
+    paymentMethodRaw === 'upi' ||
+    paymentMethodRaw === 'card' ||
+    paymentMethodRaw === 'netbanking';
+
+  if (!isOnlinePayment) {
+    const error = new Error('Product purchase requires online payment. Offline / Cash on Delivery is not available for product orders.');
+    error.statusCode = 400;
+    throw error;
+  }
 
   const order = await Order.create({
     order_number: buildOrderNumber(),
@@ -95,11 +104,11 @@ exports.createOrder = async (data) => {
     notes: data.notes,
     payment: data.paymentId,
     order_status: data.order_status || 'pending',
-    payment_status: data.payment_status || (isOnlinePayment ? 'pending' : 'pending'),
+    payment_status: 'pending',
   });
 
-  // If online payment, generate Razorpay order with the final payable amount
-  if (isOnlinePayment && total > 0) {
+  // Generate Razorpay order for online payment
+  if (total > 0) {
     try {
       const razorpayOrder = await paymentService.createOrder({
         amount: total,
@@ -125,18 +134,6 @@ exports.createOrder = async (data) => {
       error.statusCode = 502;
       throw error;
     }
-  }
-
-  // If COD / PayLater / offline payment, record coupon usage immediately upon order placement
-  if (!isOnlinePayment && couponId) {
-    await couponService.recordCouponUsage({
-      couponId,
-      couponCode,
-      orderId: order._id,
-      customerEmail: order.customer_email,
-      customerMobile: order.customer_phone,
-      discountAmount: discount,
-    });
   }
 
   return {
@@ -179,6 +176,16 @@ exports.verifyOrderPayment = async ({ orderId, razorpay_order_id, razorpay_payme
       discountAmount: order.discount,
     });
   }
+
+  // Dispatch confirmation emails to customer and admin now that online payment is confirmed
+  Order.findById(order._id)
+    .populate('items.product payment user coupon')
+    .then((populatedOrder) => {
+      emailService.sendOrderEmails(populatedOrder || order);
+    })
+    .catch((err) => {
+      console.error('[OrderService] Online order confirmation email dispatch error:', err.message);
+    });
 
   return order;
 };

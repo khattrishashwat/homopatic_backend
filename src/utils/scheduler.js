@@ -3,6 +3,7 @@ const slotService = require('../services/slotService');
 const Appointment = require('../models/Appointment');
 const notificationService = require('../services/notificationService');
 const whatsappService = require('../services/whatsappService');
+const emailService = require('../services/emailService');
 
 const generateWeekendSlots = async () => {
   try {
@@ -43,6 +44,16 @@ const sendAppointmentReminders = async () => {
           to: phone,
           body: `Hello ${recipient},\n${message}`,
         });
+      }
+
+      // Email reminder via Nodemailer
+      const email = appointment.patientEmail || appointment.patient?.email;
+      if (email) {
+        await emailService.sendAppointmentReminder(appointment, {
+          name: recipient,
+          email,
+          _id: appointment.user,
+        }).catch((err) => console.log('[Scheduler Appointment Reminder Email Error]:', err.message));
       }
     }
 

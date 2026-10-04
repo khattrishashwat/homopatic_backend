@@ -46,24 +46,9 @@ const sendBookingNotifications = async (appointment, slot) => {
       }).catch((e) => console.log('[Notification WhatsApp Admin Error]:', e.message));
     }
 
-    // 3. Email to Patient
-    if (appointment.patientEmail) {
-      await emailService.sendAppointmentConfirmation(
-        appointment,
-        { name: appointment.patientName, email: appointment.patientEmail, _id: appointment.user },
-        slot
-      ).catch((e) => console.log('[Notification Email Patient Error]:', e.message));
-    }
-
-    // 4. Email to Clinic Admin
-    const adminEmail = process.env.ADMIN_EMAIL || settings?.email || 'admin@homeopathyclinic.com';
-    if (adminEmail) {
-      await emailService.sendAppointmentConfirmation(
-        appointment,
-        { name: 'Clinic Admin', email: adminEmail },
-        slot
-      ).catch((e) => console.log('[Notification Email Admin Error]:', e.message));
-    }
+    // 3. Email to Patient and Clinic Admin via Nodemailer
+    await emailService.sendAppointmentBookingEmails(appointment, slot)
+      .catch((e) => console.log('[Notification Email Booking Error]:', e.message));
   } catch (error) {
     console.error('[sendBookingNotifications error]:', error.message);
   }
@@ -111,22 +96,15 @@ exports.bookAppointment = async (data) => {
     throw error;
   }
 
-  const paymentMethod = String(data.paymentMethod || data.payment_method || 'offline').toLowerCase() === 'online' ? 'online' : 'offline';
-
-  if (consultationType === 'online' && paymentMethod !== 'online') {
-    const error = new Error('Online consultation requires online payment. Offline payment is only available for in-person clinic visits.');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const isOnlinePayment = paymentMethod === 'online';
+  const paymentMethod = 'online'; // Website payments are strictly online only
+  const isOnlinePayment = true;
 
   const finalConcern = data.concern || data.reason || 'General Consultation';
   const customConcern = data.customConcern || '';
   const finalReason = finalConcern === 'Other' && customConcern ? `Other: ${customConcern}` : finalConcern;
 
-  // Amount: Online is 500, Offline is 200 (or custom if provided)
-  const defaultAmount = consultationType === 'online' ? 500 : 200;
+  // Amount: calculated on frontend based on medicine duration + courier charge
+  const defaultAmount = consultationType === 'online' ? 560 : 500;
   const finalAmount = Number(data.amount) || defaultAmount;
 
   const slotDate = slot.startTime ? new Date(slot.startTime) : new Date();
@@ -141,19 +119,23 @@ exports.bookAppointment = async (data) => {
     patientEmail: data.email ? data.email.trim() : undefined,
     patientPhone: data.phone ? data.phone.trim() : undefined,
     slot: slot._id,
-    status: isOnlinePayment ? 'pending' : 'confirmed',
+    status: 'pending',
     payment_status: 'pending',
-    paymentMethod,
+    paymentMethod: 'online',
     concern: finalConcern,
     customConcern,
     reason: finalReason,
+    address: data.address ? data.address.trim() : undefined,
     city: data.city ? data.city.trim() : undefined,
+    pincode: data.pincode ? data.pincode.trim() : undefined,
+    medicineDuration: data.medicineDuration || undefined,
+    courierCharge: Number(data.courierCharge) || 0,
     age: data.age ? Number(data.age) : undefined,
     consultation_type: consultationType,
     appointmentDate: slotDate,
     appointmentTime: slotTimeStr,
     amount: finalAmount,
-    notes: data.notes || (data.city || data.age ? `Age: ${data.age || '-'}; City: ${data.city || '-'}` : undefined),
+    notes: data.notes || `Age: ${data.age || '-'}; Address: ${data.address || '-'}; City: ${data.city || '-'}; Pincode: ${data.pincode || '-'}; Medicine: ${data.medicineDuration || '-'}; Courier: ₹${Number(data.courierCharge) || 0}`,
   });
 
   slot.available = false;

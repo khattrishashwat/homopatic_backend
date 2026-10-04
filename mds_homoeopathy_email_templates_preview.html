@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MD's Homoeopathy — Transactional Email Templates Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.3px;
+    }
+    .brand span {
+      font-size: 12px;
+      color: #10b981;
+      font-weight: 500;
+      display: block;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: #334155;
+      color: #cbd5e1;
+      border: 1px solid transparent;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn:hover {
+      background: #475569;
+      color: #ffffff;
+    }
+    .tab-btn.active {
+      background: #059669;
+      color: #ffffff;
+      border-color: #10b981;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+    .preview-info {
+      background: #1e293b;
+      padding: 12px 24px;
+      border-bottom: 1px solid #334155;
+      font-size: 13px;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .subject-display {
+      color: #f8fafc;
+      font-weight: 600;
+    }
+    .subject-display span {
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    main {
+      flex: 1;
+      padding: 32px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: #0b1120;
+    }
+    .preview-card {
+      display: none;
+      width: 100%;
+      max-width: 620px;
+    }
+    .preview-card.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo-badge">✚</div>
+      <div>
+        <h1>MD's Homoeopathy</h1>
+        <span>Transactional Email Design Preview</span>
+      </div>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab(1, 'Appointment Booking Confirmed - MD\\'s Homoeopathy')">1. Appointment — Patient</button>
+      <button class="tab-btn" onclick="switchTab(2, 'New Appointment Booked - Rahul Sharma')">2. Appointment — Admin</button>
+      <button class="tab-btn" onclick="switchTab(3, 'Your message has been received - MD\\'s Homoeopathy')">3. Contact Form — User</button>
+      <button class="tab-btn" onclick="switchTab(4, 'New Contact Form Submission - Anita Gupta')">4. Contact Form — Admin</button>
+      <button class="tab-btn" onclick="switchTab(5, 'Order Confirmed - ORD-7F42A91C')">5. Order — Customer</button>
+      <button class="tab-btn" onclick="switchTab(6, 'New Product Order - ORD-7F42A91C')">6. Order — Admin</button>
+    </div>
+  </header>
+
+  <div class="preview-info">
+    <div class="subject-display">Subject: <span id="current-subject">Appointment Booking Confirmed - MD's Homoeopathy</span></div>
+    <div>Rendering Standard: <strong>Responsive Table Container (max-width: 600px, Inline CSS)</strong></div>
+  </div>
+
+  <main>
+    <!-- TEMPLATE 1: APPOINTMENT PATIENT -->
+    <div id="tab-1" class="preview-card active">
+      <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">✚</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">MD's Homoeopathy</h1>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 500; color: #d1fae5;">Appointment Confirmation</p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; margin-bottom: 12px;">Dear <strong>Rahul Sharma</strong>,</p>
+          <p style="font-size: 15px; color: #475569; margin-bottom: 20px; line-height: 1.6;">Your homoeopathy consultation appointment has been <strong>successfully booked</strong>.</p>
+          
+          <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #065f46; line-height: 1.5;">
+            <strong>✓ Appointment Confirmed:</strong> Your appointment is confirmed. Please keep your Booking Reference ID <strong>#APPT-7F42A91C</strong> handy for future communication.
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-size: 13px;">
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Booking Reference ID</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 700; font-family: monospace; font-size: 15px;">#APPT-7F42A91C</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Patient Name</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 600;">Rahul Sharma</td>
+            </tr>
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Consultation Type</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">
+                <span style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #eff6ff; border: 1px solid #3b82f6; color: #1d4ed8;">🌐 Online Consultation</span>
+              </td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Health Concern</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 600;">Skin Allergy</td>
+            </tr>
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Appointment Date</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 500;">Thu, 8 Oct 2026</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Appointment Time</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 500;">06:30 PM</td>
+            </tr>
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Slot Duration</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 500;">30 Minutes</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Payment Method</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-weight: 500;">Online Payment (Razorpay)</td>
+            </tr>
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Payment Status</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">
+                <span style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; background-color: #ecfdf5; border: 1px solid #10b981; color: #047857;">Paid</span>
+              </td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Consultation Fee</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 700; font-size: 15px;">₹800</td>
+            </tr>
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Patient Email</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">rahul.sharma@example.com</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Patient Phone</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">+91 9876543210</td>
+            </tr>
+            <tr style="background-color: #ffffff;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">City</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Jaipur</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Transaction ID</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">pay_P1q2R3s4T5u6V7</td>
+            </tr>
+          </table>
+
+          <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
+            <strong>Online Consultation Note:</strong> You will receive a video consultation link before your scheduled appointment time. Please ensure you are connected to a stable internet connection.
+          </div>
+
+          <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 16px; margin-top: 24px; font-size: 13px; color: #475569; line-height: 1.5;">
+            <strong>Need assistance or wish to reschedule?</strong><br>
+            Please contact us at <strong>+91 7668610031</strong> or email us at <strong>drparthbhargava@mdshomoeopathy.com</strong>.
+          </div>
+        </div>
+        <div style="background-color: #f8fafc; padding: 24px 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #0f172a;">MD's Homoeopathy</p>
+          <p style="margin: 0 0 8px 0; font-style: italic; color: #059669; font-weight: 500;">Trusted Care for Long-term Wellness</p>
+          <p style="margin: 0; color: #64748b;">Phone: +91 7668610031 &nbsp;|&nbsp; Email: drparthbhargava@mdshomoeopathy.com</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE 2: APPOINTMENT ADMIN -->
+    <div id="tab-2" class="preview-card">
+      <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">✚</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">MD's Homoeopathy</h1>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 500; color: #d1fae5;">New Appointment Notification</p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; margin-bottom: 12px;">Hello <strong>Dr. Parth Bhargava & Admin Team</strong>,</p>
+          <p style="font-size: 15px; color: #475569; margin-bottom: 20px;">A new homoeopathy appointment booking has been registered on the platform.</p>
+
+          <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
+            <strong>📋 New Booking Alert:</strong> Rahul Sharma has booked an <strong>Online Consultation</strong> for <strong>Thu, 8 Oct 2026 at 06:30 PM</strong>.
+          </div>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">PATIENT INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Patient Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Rahul Sharma</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Email Address</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">rahul.sharma@example.com</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Phone Number</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 600;">+91 9876543210</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">City</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Jaipur</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Health Concern</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #047857;">Skin Allergy</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">APPOINTMENT INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Booking Reference ID</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-weight: 700; color: #047857;">#APPT-7F42A91C</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Consultation Type</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;"><span style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #eff6ff; border: 1px solid #3b82f6; color: #1d4ed8;">🌐 Online Consultation</span></td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Appointment Date</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Thu, 8 Oct 2026</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Appointment Time</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">06:30 PM</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Slot Duration</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">30 Minutes</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">PAYMENT INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Payment Method</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Online Payment</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Payment Status</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;"><span style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; background-color: #ecfdf5; border: 1px solid #10b981; color: #047857;">Paid</span></td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Amount</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #047857; font-size: 15px;">₹800</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Transaction ID / Payment ID</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">pay_P1q2R3s4T5u6V7</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Razorpay Order ID</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">order_O1a2B3c4D5e6F7</td></tr>
+          </table>
+        </div>
+        <div style="background-color: #f8fafc; padding: 24px 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #0f172a;">MD's Homoeopathy</p>
+          <p style="margin: 0 0 8px 0; font-style: italic; color: #059669; font-weight: 500;">Trusted Care for Long-term Wellness</p>
+          <p style="margin: 0; color: #64748b;">Phone: +91 7668610031 &nbsp;|&nbsp; Email: drparthbhargava@mdshomoeopathy.com</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE 3: CONTACT FORM USER -->
+    <div id="tab-3" class="preview-card">
+      <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">✚</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">MD's Homoeopathy</h1>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 500; color: #d1fae5;">Message Received</p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; margin-bottom: 12px;">Dear <strong>Anita Gupta</strong>,</p>
+          <p style="font-size: 15px; color: #475569; margin-bottom: 16px; line-height: 1.6;">
+            Your message has been successfully sent to MD's Homoeopathy Clinic. Our team will get back to you soon.
+          </p>
+
+          <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #065f46; line-height: 1.5;">
+            <strong>✓ Message Received:</strong> Our medical and support team will review your query and get back to you shortly via phone or email.
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Your Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Anita Gupta</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Registered Email</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">anita.gupta@example.com</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Submission Date/Time</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Sun, 4 Oct 2026 at 10:15 AM</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">YOUR SUBMITTED MESSAGE</h3>
+          </div>
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #059669; border-radius: 6px; padding: 16px; font-size: 14px; color: #1e293b; line-height: 1.6; margin-bottom: 24px;">
+            Hello doctor, I have been experiencing chronic migraines for the past 6 months. Can homoeopathy provide long-term relief?
+          </div>
+        </div>
+        <div style="background-color: #f8fafc; padding: 24px 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #0f172a;">MD's Homoeopathy</p>
+          <p style="margin: 0 0 8px 0; font-style: italic; color: #059669; font-weight: 500;">Trusted Care for Long-term Wellness</p>
+          <p style="margin: 0; color: #64748b;">Phone: +91 7668610031 &nbsp;|&nbsp; Email: drparthbhargava@mdshomoeopathy.com</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE 4: CONTACT FORM ADMIN -->
+    <div id="tab-4" class="preview-card">
+      <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">✚</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">MD's Homoeopathy</h1>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 500; color: #d1fae5;">New Contact Form Submission</p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; margin-bottom: 12px;">Hello <strong>Dr. Parth Bhargava & Admin Team</strong>,</p>
+          <p style="font-size: 15px; color: #475569; margin-bottom: 16px;">A new contact form submission has been received.</p>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Anita Gupta</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Email</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 600;">anita.gupta@example.com</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Phone</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">+91 9876543210</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Submission Date</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Sun, 4 Oct 2026</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Submission Time</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">10:15 AM</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">MESSAGE</h3>
+          </div>
+          <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #047857; border-radius: 6px; padding: 18px; font-size: 14px; color: #0f172a; line-height: 1.7; margin-bottom: 20px;">
+            Hello doctor, I have been experiencing chronic migraines for the past 6 months. Can homoeopathy provide long-term relief?
+          </div>
+          <div style="background-color: #f1f5f9; border-radius: 6px; padding: 12px 16px; font-size: 12px; color: #64748b;">
+            💡 <strong>Direct Reply Enabled:</strong> The Reply-To header is set to <strong>anita.gupta@example.com</strong>. Click "Reply" to message the sender directly.
+          </div>
+        </div>
+        <div style="background-color: #f8fafc; padding: 24px 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #0f172a;">MD's Homoeopathy</p>
+          <p style="margin: 0 0 8px 0; font-style: italic; color: #059669; font-weight: 500;">Trusted Care for Long-term Wellness</p>
+          <p style="margin: 0; color: #64748b;">Phone: +91 7668610031 &nbsp;|&nbsp; Email: drparthbhargava@mdshomoeopathy.com</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE 5: ORDER CUSTOMER -->
+    <div id="tab-5" class="preview-card">
+      <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">✚</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">MD's Homoeopathy</h1>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 500; color: #d1fae5;">Order Confirmation</p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; margin-bottom: 12px;">Dear <strong>Vikram Mehra</strong>,</p>
+          <p style="font-size: 15px; color: #475569; margin-bottom: 16px; line-height: 1.6;">
+            Thank you for your purchase. Your order has been <strong>successfully placed</strong>.
+          </p>
+
+          <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #065f46; line-height: 1.5;">
+            <strong>✓ Confirmation:</strong> Your order confirmation has been sent successfully. Your Order ID is <strong>ORD-7F42A91C</strong>.
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Order ID</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-weight: 700; color: #047857;">ORD-7F42A91C</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Order Date</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Sun, 4 Oct 2026 at 02:45 PM</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Payment Method</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Online Payment (UPI)</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Payment Status</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;"><span style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; background-color: #ecfdf5; border: 1px solid #10b981; color: #047857;">Paid</span></td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">PRODUCTS</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <thead>
+              <tr style="background-color: #047857; color: #ffffff;">
+                <th style="padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase;">Product</th>
+                <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase;">Quantity</th>
+                <th style="padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 700; text-transform: uppercase;">Unit Price</th>
+                <th style="padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Arnica Montana 200CH</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: center;">2</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹220</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 700;">₹440</td></tr>
+              <tr style="background: #f8fafc;"><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Berberis Aquifolium Mother Tincture Q</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: center;">1</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹350</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 700;">₹350</td></tr>
+              <tr><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Calendula Antiseptic Ointment 25g</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: center;">1</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹160</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 700;">₹160</td></tr>
+            </tbody>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">ORDER SUMMARY</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Subtotal</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">₹950</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Discount</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 600;">- ₹100</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Coupon Used</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">HEALTH10</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Delivery Charges</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 600;">₹80</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 700;">Final Total</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 18px; font-weight: 800; color: #047857;">₹930</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">SHIPPING ADDRESS</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Vikram Mehra</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Address</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Flat 402, Green Valley Heights, MG Road</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">City / State / Postal Code</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Pune, Maharashtra - 411001</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Phone</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">+91 9822012345</td></tr>
+          </table>
+        </div>
+        <div style="background-color: #f8fafc; padding: 24px 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #0f172a;">MD's Homoeopathy</p>
+          <p style="margin: 0 0 8px 0; font-style: italic; color: #059669; font-weight: 500;">Trusted Care for Long-term Wellness</p>
+          <p style="margin: 0; color: #64748b;">Phone: +91 7668610031 &nbsp;|&nbsp; Email: drparthbhargava@mdshomoeopathy.com</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE 6: ORDER ADMIN -->
+    <div id="tab-6" class="preview-card">
+      <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+          <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">✚</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">MD's Homoeopathy</h1>
+          <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 500; color: #d1fae5;">New Product Order</p>
+        </div>
+        <div style="padding: 28px;">
+          <p style="font-size: 15px; margin-bottom: 12px;">Hello <strong>Dr. Parth Bhargava & Admin Team</strong>,</p>
+          <p style="font-size: 15px; color: #475569; margin-bottom: 16px;">A new product order has been received.</p>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">CUSTOMER INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Customer Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Vikram Mehra</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Email Address</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">vikram.mehra@example.com</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Contact Phone</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">+91 9822012345</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">ORDER INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Order ID</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-weight: 700; color: #047857;">ORD-7F42A91C</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Order Date</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Sun, 4 Oct 2026 at 02:45 PM</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">PRODUCTS</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <thead>
+              <tr style="background-color: #047857; color: #ffffff;">
+                <th style="padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase;">Product</th>
+                <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase;">Quantity</th>
+                <th style="padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 700; text-transform: uppercase;">Unit Price</th>
+                <th style="padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Arnica Montana 200CH</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: center;">2</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹220</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 700;">₹440</td></tr>
+              <tr style="background: #f8fafc;"><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Berberis Aquifolium Mother Tincture Q</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: center;">1</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹350</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 700;">₹350</td></tr>
+              <tr><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Calendula Antiseptic Ointment 25g</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: center;">1</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right;">₹160</td><td style="padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #047857; font-weight: 700;">₹160</td></tr>
+            </tbody>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">ORDER SUMMARY</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Subtotal</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">₹950</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Discount</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 600;">- ₹100</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Coupon Used</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">HEALTH10</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Delivery Charges</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #047857; font-weight: 600;">₹80</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 700;">Final Total</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 18px; font-weight: 800; color: #047857;">₹930</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">PAYMENT INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Payment Method</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Online Payment (UPI)</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Payment Status</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;"><span style="display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; background-color: #ecfdf5; border: 1px solid #10b981; color: #047857;">Paid</span></td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Transaction ID / Payment ID</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">pay_R8s9T0u1V2w3X4</td></tr>
+          </table>
+
+          <div style="margin: 24px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0;">
+            <h3 style="margin: 0; font-size: 13px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.75px;">SHIPPING INFORMATION</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 13px;">
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; width: 38%;">Recipient Name</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">Vikram Mehra</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Street Address</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Flat 402, Green Valley Heights, MG Road</td></tr>
+            <tr><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">City / State / Postal Code</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Pune, Maharashtra - 411001</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600;">Phone Number</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">+91 9822012345</td></tr>
+          </table>
+        </div>
+        <div style="background-color: #f8fafc; padding: 24px 20px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #0f172a;">MD's Homoeopathy</p>
+          <p style="margin: 0 0 8px 0; font-style: italic; color: #059669; font-weight: 500;">Trusted Care for Long-term Wellness</p>
+          <p style="margin: 0; color: #64748b;">Phone: +91 7668610031 &nbsp;|&nbsp; Email: drparthbhargava@mdshomoeopathy.com</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function switchTab(id, subject) {
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === id - 1);
+      });
+      document.querySelectorAll('.preview-card').forEach((card) => {
+        card.classList.remove('active');
+      });
+      document.getElementById('tab-' + id).classList.add('active');
+      document.getElementById('current-subject').textContent = subject;
+    }
+  </script>
+</body>
+</html>
