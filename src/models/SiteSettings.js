@@ -35,6 +35,12 @@ const SiteSettingsSchema = new mongoose.Schema({
     max_appointments_per_slot: { type: Number, default: 1 },
     advance_booking_days: { type: Number, default: 30 },
     enable_online_booking: { type: Boolean, default: true },
+    pricing: {
+      online_7_days: { type: Number, default: 500 },
+      online_1_month: { type: Number, default: 1000 },
+      offline: { type: Number, default: 200 },
+      delivery_included: { type: Boolean, default: true },
+    },
   },
   payment_settings: {
     razorpay_key_id: { type: String },

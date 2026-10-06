@@ -1,3 +1,5 @@
+const { calculateAppointmentPricing } = require('../../constants/pricing');
+
 exports.validateCreateAppointment = (payload) => {
   if (!payload.name || !payload.name.trim()) {
     const error = new Error('Patient name is required');
@@ -30,8 +32,24 @@ exports.validateCreateAppointment = (payload) => {
     throw error;
   }
 
-  const consultationType = (payload.consultationType || payload.consultation_type || 'offline').toLowerCase();
-  const paymentMethod = (payload.paymentMethod || payload.payment_method || 'offline').toLowerCase();
+  // Determine and validate bookingType & planType
+  const rawBookingType = payload.bookingType || payload.consultationType || payload.consultation_type || 'ONLINE';
+  const bookingType = String(rawBookingType).trim().toUpperCase();
+
+  let planType = payload.planType;
+  if (!planType && payload.medicineDuration) {
+    if (payload.medicineDuration === '7_days') planType = 'SEVEN_DAYS';
+    else if (payload.medicineDuration === '30_days' || payload.medicineDuration === '1_month') planType = 'ONE_MONTH';
+  }
+
+  // This throws 400 error for invalid plan, invalid booking type, offline with plan, online without plan, etc.
+  calculateAppointmentPricing({
+    bookingType,
+    planType,
+  });
+
+  const consultationType = bookingType.toLowerCase();
+  const paymentMethod = (payload.paymentMethod || payload.payment_method || (consultationType === 'online' ? 'online' : 'offline')).toLowerCase();
   if (!['online', 'offline'].includes(paymentMethod)) {
     const error = new Error('Payment method must be online or offline');
     error.statusCode = 400;

@@ -7,6 +7,8 @@ exports.createAppointment = async (req, res, next) => {
     const result = await appointmentService.createAppointment({
       userId: req.user?._id,
       patientId: req.body.patientId,
+      customerId: req.body.customerId,
+      leadId: req.body.leadId,
       name: req.body.name || req.body.patientName,
       email: req.body.email || req.body.patientEmail,
       phone: req.body.phone || req.body.patientPhone,
@@ -14,8 +16,13 @@ exports.createAppointment = async (req, res, next) => {
       reason: req.body.reason || req.body.concern,
       concern: req.body.concern || req.body.reason,
       customConcern: req.body.customConcern,
+      address: req.body.address,
       city: req.body.city,
+      pincode: req.body.pincode,
       age: req.body.age,
+      bookingType: req.body.bookingType,
+      planType: req.body.planType,
+      medicineDuration: req.body.medicineDuration,
       consultationType: req.body.consultation_type || req.body.consultationType || req.body.consultationMode,
       paymentMethod: req.body.paymentMethod || req.body.payment_method,
       paymentStatus: req.body.payment_status || req.body.paymentStatus,
@@ -24,9 +31,23 @@ exports.createAppointment = async (req, res, next) => {
     });
 
     const appointment = result.appointment || result;
+    const appointmentObj = appointment.toObject ? appointment.toObject() : appointment;
+
+    // Ensure all required fields are explicitly available in response
+    const formattedData = {
+      ...appointmentObj,
+      bookingType: appointmentObj.bookingType || (appointmentObj.consultation_type === 'online' ? 'ONLINE' : 'OFFLINE'),
+      planType: appointmentObj.planType || null,
+      planDuration: appointmentObj.planDuration || null,
+      baseAmount: appointmentObj.baseAmount !== undefined ? appointmentObj.baseAmount : appointmentObj.amount,
+      deliveryCharge: appointmentObj.deliveryCharge !== undefined ? appointmentObj.deliveryCharge : 0,
+      totalAmount: appointmentObj.totalAmount !== undefined ? appointmentObj.totalAmount : appointmentObj.amount,
+      paymentStatus: appointmentObj.payment_status || appointmentObj.paymentStatus || 'pending',
+    };
+
     res.status(201).json({
       success: true,
-      data: appointment,
+      data: formattedData,
       razorpayOrder: result.razorpayOrder,
     });
   } catch (error) {
@@ -91,9 +112,21 @@ exports.adminListAppointments = async (req, res, next) => {
     const filters = {
       status: req.query.status,
       consultation_type: req.query.consultation_type,
+      bookingType: req.query.bookingType || req.query.booking_type,
+      planType: req.query.planType || req.query.plan_type,
+      payment_status: req.query.payment_status || req.query.paymentStatus,
     };
     const appointments = await appointmentService.getAllAppointments(filters);
     res.json({ success: true, data: appointments });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPricingConfig = async (req, res, next) => {
+  try {
+    const pricing = await appointmentService.getPricingConfig();
+    res.json({ success: true, data: pricing });
   } catch (error) {
     next(error);
   }

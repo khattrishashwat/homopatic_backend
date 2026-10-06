@@ -118,9 +118,14 @@ exports.updateAppointmentSettings = async (req, res, next) => {
       });
     }
 
+    const existing = settings.appointment_settings ? (typeof settings.appointment_settings.toObject === 'function' ? settings.appointment_settings.toObject() : settings.appointment_settings) : {};
     settings.appointment_settings = {
-      ...settings.appointment_settings,
+      ...existing,
       ...req.body,
+      pricing: {
+        ...(existing.pricing || { online_7_days: 500, online_1_month: 1000, offline: 200, delivery_included: true }),
+        ...(req.body.pricing || {}),
+      },
     };
 
     settings.updated_at = new Date();

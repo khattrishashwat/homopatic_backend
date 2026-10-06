@@ -5,6 +5,7 @@ const appointmentController = require('../../modules/appointments/appointment.co
 
 router.post('/', appointmentController.createAppointment);
 router.post('/verify-payment', appointmentController.verifyPayment);
+router.get('/pricing', appointmentController.getPricingConfig);
 
 router.use(authMiddleware.requireAuth);
 router.get('/', appointmentController.getUserAppointments);

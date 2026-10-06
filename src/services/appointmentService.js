@@ -4,6 +4,7 @@ const SiteSettings = require('../models/SiteSettings');
 const paymentService = require('./paymentService');
 const emailService = require('./emailService');
 const whatsappService = require('./whatsappService');
+const { calculateAppointmentPricing, getEffectivePricingConfig } = require('../constants/pricing');
 
 const validateAppointmentStatus = (status) => {
   const allowed = ['pending', 'confirmed', 'rejected', 'cancelled', 'completed', 'missed'];
@@ -89,23 +90,45 @@ exports.bookAppointment = async (data) => {
     throw error;
   }
 
-  const consultationType = String(data.consultationType || data.consultation_type || 'offline').toLowerCase() === 'online' ? 'online' : 'offline';
+  // 1. Resolve and validate Booking Type & Plan Type
+  const rawBookingType = data.bookingType || data.consultationType || data.consultation_type || 'ONLINE';
+  const bookingType = String(rawBookingType).trim().toUpperCase() === 'OFFLINE' ? 'OFFLINE' : 'ONLINE';
+  const consultationType = bookingType.toLowerCase();
+
+  let planType = data.planType;
+  if (!planType && data.medicineDuration) {
+    if (data.medicineDuration === '7_days') planType = 'SEVEN_DAYS';
+    else if (data.medicineDuration === '30_days' || data.medicineDuration === '1_month') planType = 'ONE_MONTH';
+  }
+
+  // Fetch optional dynamic pricing overrides from SiteSettings
+  const siteSettings = await SiteSettings.findOne().lean().catch(() => null);
+  const pricingSettings = siteSettings?.appointment_settings?.pricing;
+
+  // Authoritative server-side price calculation (never trusts client amount)
+  const pricing = calculateAppointmentPricing({
+    bookingType,
+    planType,
+    pricingSettings,
+  });
+
   if (slot.bookingType && slot.bookingType !== 'both' && slot.bookingType !== consultationType) {
     const error = new Error(`This time slot is configured for ${slot.bookingType} bookings only.`);
     error.statusCode = 400;
     throw error;
   }
 
-  const paymentMethod = 'online'; // Website payments are strictly online only
-  const isOnlinePayment = true;
+  // Payment Method:
+  // For ONLINE: strictly online payment
+  // For OFFLINE: user can choose online (Razorpay) or offline (pay at clinic)
+  const paymentMethod = bookingType === 'ONLINE'
+    ? 'online'
+    : (data.paymentMethod || data.payment_method || 'offline').toLowerCase();
+  const isOnlinePayment = paymentMethod === 'online';
 
   const finalConcern = data.concern || data.reason || 'General Consultation';
   const customConcern = data.customConcern || '';
   const finalReason = finalConcern === 'Other' && customConcern ? `Other: ${customConcern}` : finalConcern;
-
-  // Amount: calculated on frontend based on medicine duration + courier charge
-  const defaultAmount = consultationType === 'online' ? 560 : 500;
-  const finalAmount = Number(data.amount) || defaultAmount;
 
   const slotDate = slot.startTime ? new Date(slot.startTime) : new Date();
   const slotTimeStr = slot.startTime
@@ -121,21 +144,31 @@ exports.bookAppointment = async (data) => {
     slot: slot._id,
     status: 'pending',
     payment_status: 'pending',
-    paymentMethod: 'online',
+    paymentMethod,
+    bookingType: pricing.bookingType,
+    planType: pricing.planType,
+    planDuration: pricing.planDuration,
+    baseAmount: pricing.baseAmount,
+    deliveryCharge: pricing.deliveryCharge,
+    totalAmount: pricing.totalAmount,
+    amount: pricing.totalAmount, // backward compatibility
     concern: finalConcern,
     customConcern,
     reason: finalReason,
     address: data.address ? data.address.trim() : undefined,
     city: data.city ? data.city.trim() : undefined,
     pincode: data.pincode ? data.pincode.trim() : undefined,
-    medicineDuration: data.medicineDuration || undefined,
-    courierCharge: Number(data.courierCharge) || 0,
+    medicineDuration: pricing.planType === 'SEVEN_DAYS' ? '7_days' : (pricing.planType === 'ONE_MONTH' ? '30_days' : undefined),
+    courierCharge: 0,
     age: data.age ? Number(data.age) : undefined,
     consultation_type: consultationType,
     appointmentDate: slotDate,
     appointmentTime: slotTimeStr,
-    amount: finalAmount,
-    notes: data.notes || `Age: ${data.age || '-'}; Address: ${data.address || '-'}; City: ${data.city || '-'}; Pincode: ${data.pincode || '-'}; Medicine: ${data.medicineDuration || '-'}; Courier: ₹${Number(data.courierCharge) || 0}`,
+    customerId: data.customerId || (data.patientId ? String(data.patientId) : undefined),
+    leadId: data.leadId || undefined,
+    notes: data.notes || (bookingType === 'ONLINE'
+      ? `Online Appointment | Plan: ${pricing.planLabel} (₹${pricing.baseAmount}) | Delivery: Included | Address: ${data.address || '-'}, ${data.city || '-'} - ${data.pincode || '-'}`
+      : `Offline Appointment (₹${pricing.baseAmount}) | City: ${data.city || '-'}`),
   });
 
   slot.available = false;
@@ -145,14 +178,16 @@ exports.bookAppointment = async (data) => {
 
   if (isOnlinePayment) {
     const razorpayOrder = await paymentService.createOrder({
-      amount: finalAmount,
+      amount: pricing.totalAmount, // Strictly backend calculated
       appointmentId: appointment._id,
       patientId: data.patientId,
       userId: data.userId,
       customerName: appointment.patientName,
       customerEmail: appointment.patientEmail,
       customerPhone: appointment.patientPhone,
-      description: `Appointment (${consultationType === 'online' ? 'Online' : 'Clinic Visit'})`,
+      description: bookingType === 'ONLINE'
+        ? `Online Appointment (${pricing.planLabel})`
+        : 'Offline Clinic Appointment',
     });
 
     appointment.razorpayOrderId = razorpayOrder.orderId;
@@ -241,9 +276,23 @@ exports.getAllAppointments = async (filters = {}) => {
   const query = {};
 
   if (filters.status) query.status = filters.status;
-  if (filters.consultation_type) query.consultation_type = filters.consultation_type;
+  if (filters.consultation_type) {
+    query.$or = [
+      { consultation_type: filters.consultation_type.toLowerCase() },
+      { bookingType: filters.consultation_type.toUpperCase() },
+    ];
+  }
+  if (filters.bookingType) {
+    query.bookingType = { $regex: new RegExp(`^${filters.bookingType}$`, 'i') };
+  }
+  if (filters.planType) {
+    query.planType = filters.planType;
+  }
+  if (filters.payment_status) {
+    query.payment_status = filters.payment_status;
+  }
 
-  return Appointment.find(query).populate('user slot patient');
+  return Appointment.find(query).sort({ createdAt: -1 }).populate('user slot patient');
 };
 
 exports.updateAppointmentStatus = async (id, status) => {
@@ -344,4 +393,9 @@ exports.countAppointments = async () => {
 
 exports.getAppointmentsByPatient = async (patientId) => {
   return Appointment.find({ patient: patientId }).populate('slot patient');
+};
+
+exports.getPricingConfig = async () => {
+  const settings = await SiteSettings.findOne().lean().catch(() => null);
+  return getEffectivePricingConfig(settings?.appointment_settings?.pricing);
 };

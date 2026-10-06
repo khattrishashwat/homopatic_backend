@@ -27,8 +27,14 @@ function generateAppointmentAdminEmail(data = {}) {
     ? `Other (${appointment.customConcern})`
     : (appointment.concern || appointment.reason || 'General Consultation');
 
-  const consultationType = appointment.consultation_type || appointment.consultationType || 'offline';
-  const isOnline = String(consultationType).toLowerCase() === 'online';
+  const rawType = appointment.bookingType || appointment.consultation_type || appointment.consultationType || 'offline';
+  const isOnline = String(rawType).toLowerCase() === 'online';
+  const bookingTypeDisplay = isOnline ? 'Online' : 'Offline';
+
+  const planType = appointment.planType || (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' : (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null));
+  const planDisplay = isOnline
+    ? (planType === 'SEVEN_DAYS' ? '7 Days Plan' : (planType === 'ONE_MONTH' ? '1 Month Plan' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan')))
+    : null;
 
   const appointmentDate = slot?.startTime || appointment.appointmentDate;
   const formattedDate = appointmentDate ? formatDate(appointmentDate) : '-';
@@ -39,18 +45,17 @@ function generateAppointmentAdminEmail(data = {}) {
   const slotDuration = (slot && slot.durationMinutes) || 30;
 
   const paymentMethod = appointment.paymentMethod || (isOnline ? 'online' : 'offline');
-  const paymentMethodText = paymentMethod === 'online' ? 'Online Payment' : 'Offline Payment';
+  const paymentMethodText = paymentMethod === 'online' ? 'Online Payment (Razorpay)' : 'Offline / Pay at Clinic';
 
-  const paymentStatus = appointment.payment_status || (paymentMethod === 'online' ? 'pending' : 'Pending (Pay at Consultation)');
-  const amount = appointment.amount !== undefined ? `₹${appointment.amount}` : '-';
+  const paymentStatus = appointment.payment_status || (paymentMethod === 'online' ? 'paid' : 'pending');
+  const totalAmountNum = appointment.totalAmount !== undefined ? appointment.totalAmount : appointment.amount;
+  const formattedAmount = totalAmountNum !== undefined ? `₹${totalAmountNum.toLocaleString('en-IN')}` : '-';
 
   const patientEmail = appointment.patientEmail || data.email || 'Not provided';
   const patientPhone = appointment.patientPhone || data.phone || 'Not provided';
   const address = appointment.address || data.address;
   const city = appointment.city || data.city || 'Not provided';
   const pincode = appointment.pincode || data.pincode;
-  const medicineDuration = appointment.medicineDuration || data.medicineDuration;
-  const courierCharge = appointment.courierCharge !== undefined ? appointment.courierCharge : data.courierCharge;
   const age = appointment.age || data.age;
   const paymentId = appointment.razorpayPaymentId || appointment.paymentId || 'Not provided';
   const orderId = appointment.razorpayOrderId || 'Not provided';
@@ -64,35 +69,32 @@ function generateAppointmentAdminEmail(data = {}) {
   if (age) {
     patientRows.push(renderTableRow('Age', `${age} Years`, false));
   }
-  if (address) {
+  if (isOnline && address) {
     patientRows.push(renderTableRow('Delivery Address', `${address}, ${city}${pincode ? ` - ${pincode}` : ''}`, true));
-  } else if (city) {
+  } else if (city && city !== 'Not provided') {
     patientRows.push(renderTableRow('City / Location', city, true));
   }
 
   const appointmentRows = [
     renderTableRow('Booking Reference ID', `<span style="font-family: monospace; font-size: 15px; font-weight: 700; color: #047857;">${bookingId}</span>`, false),
-    renderTableRow('Consultation Type', renderConsultationBadge(consultationType), true),
+    renderTableRow('Booking Type', `<strong style="color: ${isOnline ? '#0284c7' : '#047857'}; font-size: 14px;">${bookingTypeDisplay}</strong>`, true),
     renderTableRow('Appointment Date', formattedDate, false),
     renderTableRow('Appointment Time', formattedTime, true),
     renderTableRow('Slot Duration', `${slotDuration} Minutes`, false),
   ];
-  if (medicineDuration) {
-    const medTitle = medicineDuration === '7_days' ? '7 Days Course' : medicineDuration === '15_days' ? '15 Days Course' : '1 Month (30 Days) Course';
-    appointmentRows.push(renderTableRow('Prescribed Course', `<strong>${medTitle}</strong>`, true));
+  if (isOnline && planDisplay) {
+    appointmentRows.push(renderTableRow('Selected Plan', `<strong>${planDisplay}</strong>`, true));
+    appointmentRows.push(renderTableRow('Delivery Charges', `<span style="color: #047857; font-weight: 600;">Included in Plan</span>`, false));
   }
 
   const paymentRows = [
     renderTableRow('Payment Method', paymentMethodText, false),
     renderTableRow('Payment Status', renderStatusBadge(paymentStatus), true),
-    renderTableRow('Total Amount Received', `<span style="font-weight: 700; font-size: 15px; color: #047857;">${amount}</span>`, false),
+    renderTableRow(isOnline ? 'Total Payable Amount' : 'Appointment Fee', `<span style="font-weight: 700; font-size: 16px; color: #047857;">${formattedAmount}</span>`, false),
   ];
-  if (courierCharge > 0) {
-    paymentRows.push(renderTableRow('Courier Delivery Charge', `₹${courierCharge}`, true));
-  }
   paymentRows.push(
-    renderTableRow('Razorpay Payment ID', `<span style="font-family: monospace;">${paymentId}</span>`, false),
-    renderTableRow('Razorpay Order ID', `<span style="font-family: monospace;">${orderId}</span>`, true)
+    renderTableRow('Razorpay Payment ID', `<span style="font-family: monospace;">${paymentId}</span>`, true),
+    renderTableRow('Razorpay Order ID', `<span style="font-family: monospace;">${orderId}</span>`, false)
   );
 
   const content = `

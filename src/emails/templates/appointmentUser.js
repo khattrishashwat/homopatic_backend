@@ -26,8 +26,14 @@ function generateAppointmentUserEmail(data = {}) {
     ? `Other (${appointment.customConcern})`
     : (appointment.concern || appointment.reason || 'General Consultation');
 
-  const consultationType = appointment.consultation_type || appointment.consultationType || 'offline';
-  const isOnline = String(consultationType).toLowerCase() === 'online';
+  const rawType = appointment.bookingType || appointment.consultation_type || appointment.consultationType || 'offline';
+  const isOnline = String(rawType).toLowerCase() === 'online';
+  const bookingTypeDisplay = isOnline ? 'Online' : 'Offline';
+
+  const planType = appointment.planType || (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' : (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null));
+  const planDisplay = isOnline
+    ? (planType === 'SEVEN_DAYS' ? '7 Days' : (planType === 'ONE_MONTH' ? '1 Month' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan')))
+    : null;
 
   const appointmentDate = slot?.startTime || appointment.appointmentDate;
   const formattedDate = appointmentDate ? formatDate(appointmentDate) : '-';
@@ -40,16 +46,15 @@ function generateAppointmentUserEmail(data = {}) {
   const paymentMethod = appointment.paymentMethod || (isOnline ? 'online' : 'offline');
   const paymentMethodText = paymentMethod === 'online' ? 'Online Payment (Razorpay)' : 'Offline / Pay at Clinic';
 
-  const paymentStatus = appointment.payment_status || (paymentMethod === 'online' ? 'pending' : 'Pay at Consultation');
-  const amount = appointment.amount !== undefined ? `₹${appointment.amount}` : '-';
+  const paymentStatus = appointment.payment_status || (paymentMethod === 'online' ? 'paid' : 'pending');
+  const totalAmountNum = appointment.totalAmount !== undefined ? appointment.totalAmount : appointment.amount;
+  const formattedAmount = totalAmountNum !== undefined ? `₹${totalAmountNum.toLocaleString('en-IN')}` : '-';
 
   const patientEmail = appointment.patientEmail || data.email;
   const patientPhone = appointment.patientPhone || data.phone;
   const address = appointment.address || data.address;
   const city = appointment.city || data.city;
   const pincode = appointment.pincode || data.pincode;
-  const medicineDuration = appointment.medicineDuration || data.medicineDuration;
-  const courierCharge = appointment.courierCharge !== undefined ? appointment.courierCharge : data.courierCharge;
   const paymentId = appointment.razorpayPaymentId || appointment.paymentId;
   const orderId = appointment.razorpayOrderId;
 
@@ -59,24 +64,33 @@ function generateAppointmentUserEmail(data = {}) {
   const tableRows = [
     renderTableRow('Booking Reference ID', `<span style="font-family: monospace; font-size: 15px; font-weight: 700; color: #047857;">${bookingId}</span>`, isAlt()),
     renderTableRow('Patient Name', `<strong>${patientName}</strong>`, isAlt()),
-    renderTableRow('Consultation Type', renderConsultationBadge(consultationType), isAlt()),
+    renderTableRow('Booking Type', `<strong style="color: ${isOnline ? '#0284c7' : '#047857'}; font-size: 14px;">${bookingTypeDisplay}</strong>`, isAlt()),
+  ];
+
+  if (isOnline && planDisplay) {
+    tableRows.push(renderTableRow('Plan', `<strong>${planDisplay}</strong>`, isAlt()));
+  }
+
+  tableRows.push(
     renderTableRow('Health Concern', `<span style="font-weight: 600; color: #0f172a;">${concernText}</span>`, isAlt()),
     renderTableRow('Appointment Date', formattedDate, isAlt()),
     renderTableRow('Appointment Time', formattedTime, isAlt()),
     renderTableRow('Slot Duration', `${slotDuration} Minutes`, isAlt()),
-    renderTableRow('Payment Method', paymentMethodText, isAlt()),
-    renderTableRow('Payment Status', renderStatusBadge(paymentStatus), isAlt()),
-    renderTableRow('Total Amount Paid', `<span style="font-weight: 700; font-size: 15px; color: #047857;">${amount}</span>`, isAlt()),
-  ];
+  );
 
-  if (medicineDuration) {
-    const medTitle = medicineDuration === '7_days' ? '7 Days Course' : medicineDuration === '15_days' ? '15 Days Course' : '1 Month (30 Days) Course';
-    tableRows.push(renderTableRow('Medicine Course', `<strong>${medTitle}</strong>`, isAlt()));
+  if (isOnline) {
+    tableRows.push(renderTableRow('Delivery Charges', `<span style="font-weight: 600; color: #047857;">Included</span>`, isAlt()));
+    tableRows.push(renderTableRow('Total Payable Amount', `<span style="font-weight: 700; font-size: 16px; color: #047857;">${formattedAmount}</span>`, isAlt()));
+  } else {
+    tableRows.push(renderTableRow('Appointment Fee', `<span style="font-weight: 700; font-size: 16px; color: #047857;">${formattedAmount}</span>`, isAlt()));
   }
-  if (courierCharge > 0) {
-    tableRows.push(renderTableRow('Courier Delivery Charge', `₹${courierCharge}`, isAlt()));
-  }
-  if (address) {
+
+  tableRows.push(
+    renderTableRow('Payment Method', paymentMethodText, isAlt()),
+    renderTableRow('Payment Status', renderStatusBadge(paymentStatus), isAlt())
+  );
+
+  if (isOnline && address) {
     tableRows.push(renderTableRow('Delivery Address', `${address}${city ? `, ${city}` : ''}${pincode ? ` - ${pincode}` : ''}`, isAlt()));
   }
 

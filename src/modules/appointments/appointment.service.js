@@ -14,4 +14,5 @@ module.exports = {
   countAppointments: appointmentService.countAppointments,
   getAppointmentsByPatient: appointmentService.getAppointmentsByPatient,
   verifyAppointmentPayment: appointmentService.verifyAppointmentPayment,
+  getPricingConfig: appointmentService.getPricingConfig,
 };

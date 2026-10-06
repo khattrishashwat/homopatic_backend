@@ -57,8 +57,17 @@ exports.formatAppointmentMessage = (appointment, slot) => {
     ? `${new Date(slot.startTime).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} at ${new Date(slot.startTime).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })}`
     : (appointment.appointmentTime || 'Scheduled slot');
 
-  const modeText = appointment.consultation_type === 'online' ? 'Online Consultation' : 'Clinic Visit (Offline)';
-  const paymentMethodText = appointment.paymentMethod === 'online' ? 'Online Payment' : 'Offline Payment';
+  const rawType = appointment.bookingType || appointment.consultation_type || 'offline';
+  const isOnline = String(rawType).toLowerCase() === 'online';
+  const modeText = isOnline ? 'Online Consultation' : 'Clinic Visit (Offline)';
+
+  const planType = appointment.planType || (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' : (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null));
+  const planTitle = isOnline ? (planType === 'SEVEN_DAYS' ? '7 Days Plan' : (planType === 'ONE_MONTH' ? '1 Month Plan' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan'))) : null;
+
+  const totalAmountNum = appointment.totalAmount !== undefined ? appointment.totalAmount : appointment.amount;
+  const amountStr = totalAmountNum !== undefined ? `₹${totalAmountNum.toLocaleString('en-IN')}` : '-';
+
+  const paymentMethodText = appointment.paymentMethod === 'online' ? 'Online Payment (Razorpay)' : 'Offline (Pay at Clinic)';
   const paymentStatusText = appointment.payment_status === 'paid' ? 'Paid' : 'Pending (Pay at Consultation)';
 
   return [
@@ -70,8 +79,11 @@ exports.formatAppointmentMessage = (appointment, slot) => {
     `🩺 *Concern:* ${concernText}`,
     appointment.city ? `📍 *City:* ${appointment.city}` : null,
     appointment.age ? `🎂 *Age:* ${appointment.age}` : null,
-    `🌐 *Consultation Mode:* ${modeText}`,
-    `📅 *Appointment:* ${slotTime}`,
+    `🌐 *Booking Type:* ${isOnline ? 'Online' : 'Offline'}`,
+    planTitle ? `📦 *Plan:* ${planTitle}` : null,
+    isOnline ? `🚚 *Delivery Charges:* Included` : null,
+    `💰 *${isOnline ? 'Total Payable Amount' : 'Appointment Fee'}:* ${amountStr}`,
+    `📅 *Appointment Date & Time:* ${slotTime}`,
     `💳 *Payment Method:* ${paymentMethodText}`,
     `📌 *Payment Status:* ${paymentStatusText}`,
     `----------------------------------------`,
