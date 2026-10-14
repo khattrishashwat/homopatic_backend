@@ -10,8 +10,12 @@ exports.createPrescription = async (req, res, next) => {
       doctorId: req.user?._id,
       doctorName: req.user?.name,
       title: req.body.title,
+      prescriptionDate: req.body.prescriptionDate,
+      vitals: req.body.vitals,
       medicines: req.body.medicines,
+      advice: req.body.advice,
       notes: req.body.notes,
+      imageData: req.body.imageData,
     });
     res.status(201).json({ success: true, data: prescription });
   } catch (error) {

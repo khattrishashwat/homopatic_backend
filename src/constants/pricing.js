@@ -1,14 +1,14 @@
 /**
  * Centralized Single Source of Truth for Appointment Pricing
- * Supports Online Subscription Plans (7 Days, 1 Month) and Offline Clinic Appointments
+ * Supports Online Subscription Plans (15 Days, 1 Month) and Offline Clinic Appointments
  */
 
 const APPOINTMENT_PRICING = Object.freeze({
   ONLINE: Object.freeze({
-    SEVEN_DAYS: Object.freeze({
-      key: 'SEVEN_DAYS',
-      label: '7 Days Plan',
-      durationDays: 7,
+    FIFTEEN_DAYS: Object.freeze({
+      key: 'FIFTEEN_DAYS',
+      label: '15 Days Plan',
+      durationDays: 15,
       baseAmount: 500,
       deliveryCharge: 0,
       deliveryIncluded: true,
@@ -22,6 +22,15 @@ const APPOINTMENT_PRICING = Object.freeze({
       deliveryCharge: 0,
       deliveryIncluded: true,
       totalAmount: 1000,
+    }),
+    SEVEN_DAYS: Object.freeze({
+      key: 'FIFTEEN_DAYS',
+      label: '15 Days Plan',
+      durationDays: 15,
+      baseAmount: 500,
+      deliveryCharge: 0,
+      deliveryIncluded: true,
+      totalAmount: 500,
     }),
   }),
   OFFLINE: Object.freeze({
@@ -43,7 +52,7 @@ const APPOINTMENT_PRICING = Object.freeze({
  *
  * @param {Object} params
  * @param {string} params.bookingType - 'ONLINE' or 'OFFLINE' (case-insensitive)
- * @param {string} [params.planType] - 'SEVEN_DAYS' or 'ONE_MONTH' (required for ONLINE, prohibited for OFFLINE)
+ * @param {string} [params.planType] - 'FIFTEEN_DAYS' or 'ONE_MONTH' (required for ONLINE, prohibited for OFFLINE)
  * @param {Object} [params.pricingSettings] - Optional dynamic price overrides from SiteSettings
  * @returns {Object} Validated pricing breakdown
  */
@@ -65,22 +74,25 @@ function calculateAppointmentPricing({ bookingType, planType, pricingSettings = 
   // A. ONLINE BOOKING
   if (normBookingType === 'ONLINE') {
     if (!planType || typeof planType !== 'string' || !planType.trim()) {
-      const error = new Error('Online booking requires a subscription plan selection (SEVEN_DAYS or ONE_MONTH)');
+      const error = new Error('Online booking requires a subscription plan selection (FIFTEEN_DAYS or ONE_MONTH)');
       error.statusCode = 400;
       throw error;
     }
 
-    const normPlanType = planType.trim().toUpperCase();
+    let normPlanType = planType.trim().toUpperCase();
+    if (normPlanType === 'SEVEN_DAYS') {
+      normPlanType = 'FIFTEEN_DAYS';
+    }
 
-    if (!['SEVEN_DAYS', 'ONE_MONTH'].includes(normPlanType)) {
-      const error = new Error(`Invalid plan for online booking: "${planType}". Allowed plans: SEVEN_DAYS, ONE_MONTH.`);
+    if (!['FIFTEEN_DAYS', 'ONE_MONTH'].includes(normPlanType)) {
+      const error = new Error(`Invalid plan for online booking: "${planType}". Allowed plans: FIFTEEN_DAYS, ONE_MONTH.`);
       error.statusCode = 400;
       throw error;
     }
 
     const defaultPlan = APPOINTMENT_PRICING.ONLINE[normPlanType];
-    const customPrice = normPlanType === 'SEVEN_DAYS'
-      ? pricingSettings.online_7_days
+    const customPrice = normPlanType === 'FIFTEEN_DAYS'
+      ? (pricingSettings.online_15_days ?? pricingSettings.online_7_days)
       : pricingSettings.online_1_month;
 
     const baseAmount = Number(customPrice) > 0 ? Number(customPrice) : defaultPlan.baseAmount;
@@ -130,9 +142,9 @@ function calculateAppointmentPricing({ bookingType, planType, pricingSettings = 
  * @param {Object} [pricingSettings] - Optional SiteSettings overrides
  */
 function getEffectivePricingConfig(pricingSettings = {}) {
-  const online7 = Number(pricingSettings.online_7_days) > 0
-    ? Number(pricingSettings.online_7_days)
-    : APPOINTMENT_PRICING.ONLINE.SEVEN_DAYS.baseAmount;
+  const online15 = Number(pricingSettings.online_15_days ?? pricingSettings.online_7_days) > 0
+    ? Number(pricingSettings.online_15_days ?? pricingSettings.online_7_days)
+    : APPOINTMENT_PRICING.ONLINE.FIFTEEN_DAYS.baseAmount;
 
   const online30 = Number(pricingSettings.online_1_month) > 0
     ? Number(pricingSettings.online_1_month)
@@ -144,10 +156,10 @@ function getEffectivePricingConfig(pricingSettings = {}) {
 
   return {
     ONLINE: {
-      SEVEN_DAYS: {
-        ...APPOINTMENT_PRICING.ONLINE.SEVEN_DAYS,
-        baseAmount: online7,
-        totalAmount: online7,
+      FIFTEEN_DAYS: {
+        ...APPOINTMENT_PRICING.ONLINE.FIFTEEN_DAYS,
+        baseAmount: online15,
+        totalAmount: online15,
       },
       ONE_MONTH: {
         ...APPOINTMENT_PRICING.ONLINE.ONE_MONTH,

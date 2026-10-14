@@ -37,12 +37,22 @@ exports.getAllCategories = async (filters = {}) => {
 
   // Filter by type
   if (filters.type && filters.type !== "all") {
-    query.type = { $in: [filters.type, "both"] };
+    if (filters.type === "health_concern") {
+      query.type = "health_concern";
+    } else if (filters.type === "both") {
+      query.type = "both";
+    } else {
+      query.type = { $in: [filters.type, "both"] };
+    }
   }
 
   // Filter by status
-  if (filters.status !== undefined) {
-    query.status = filters.status === "true";
+  if (filters.status !== undefined && filters.status !== "all") {
+    if (filters.status === "true" || filters.status === "active") {
+      query.status = { $in: ["active", true] };
+    } else if (filters.status === "false" || filters.status === "inactive") {
+      query.status = { $in: ["inactive", false] };
+    }
   }
 
   // Search filter
@@ -67,32 +77,48 @@ exports.getAllCategories = async (filters = {}) => {
     .sort({ name: 1 })
     .select("name slug description status type");
 
-  return categories.map((cat) => ({
-  ...cat.toObject(),
-  status: cat.status ? "active" : "inactive",
-}));
+  return categories.map((cat) => {
+    const obj = cat.toObject ? cat.toObject() : cat;
+    const isActive = obj.status === "active" || obj.status === true;
+    return {
+      ...obj,
+      status: isActive ? "active" : "inactive",
+      active: isActive,
+    };
+  });
 };
 
 
 exports.getActiveCategories = async (type = "both") => {
   const query = {
-    status: "active",
+    status: { $in: ["active", true] },
   };
 
-  if (type && type !== "both") {
-    query.type = {
-      $in: [type, "both"],
-    };
+  if (type && type !== "all") {
+    if (type === "health_concern") {
+      query.type = "health_concern";
+    } else if (type === "both") {
+      query.type = { $in: ["product", "blog", "both"] };
+    } else {
+      query.type = {
+        $in: [type, "both"],
+      };
+    }
   }
 
   const categories = await Category.find(query)
     .sort({ name: 1 })
     .select("name slug description status type");
 
-  return categories.map((cat) => ({
-    ...cat.toObject(),
-    status: cat.status ? "active" : "inactive",
-  }));
+  return categories.map((cat) => {
+    const obj = cat.toObject ? cat.toObject() : cat;
+    const isActive = obj.status === "active" || obj.status === true;
+    return {
+      ...obj,
+      status: isActive ? "active" : "inactive",
+      active: isActive,
+    };
+  });
 };
 
 
@@ -132,11 +158,15 @@ exports.createCategory = async (data) => {
   // Auto Generate Slug
   const slug = await generateUniqueSlug(data.name);
 
+  const status = data.status !== undefined
+    ? (typeof data.status === "boolean" ? (data.status ? "active" : "inactive") : data.status)
+    : (data.active !== undefined ? (data.active ? "active" : "inactive") : "active");
+
   const category = await Category.create({
     name: data.name,
     slug,
     description: data.description || "",
-    status: data.status ?? "active",
+    status,
     type: data.type || "both",
   });
 
@@ -163,7 +193,11 @@ exports.updateCategory = async (id, data) => {
   // Update Fields
   category.name = data.name ?? category.name;
   category.description = data.description ?? category.description;
-  category.status = data.status ?? category.status;
+  if (data.status !== undefined) {
+    category.status = typeof data.status === "boolean" ? (data.status ? "active" : "inactive") : data.status;
+  } else if (data.active !== undefined) {
+    category.status = data.active ? "active" : "inactive";
+  }
   category.type = data.type ?? category.type;
 
   await category.save();

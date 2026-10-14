@@ -38,8 +38,11 @@ exports.validateCreateAppointment = (payload) => {
 
   let planType = payload.planType;
   if (!planType && payload.medicineDuration) {
-    if (payload.medicineDuration === '7_days') planType = 'SEVEN_DAYS';
+    if (payload.medicineDuration === '15_days' || payload.medicineDuration === '7_days') planType = 'FIFTEEN_DAYS';
     else if (payload.medicineDuration === '30_days' || payload.medicineDuration === '1_month') planType = 'ONE_MONTH';
+  }
+  if (planType === 'SEVEN_DAYS') {
+    planType = 'FIFTEEN_DAYS';
   }
 
   // This throws 400 error for invalid plan, invalid booking type, offline with plan, online without plan, etc.

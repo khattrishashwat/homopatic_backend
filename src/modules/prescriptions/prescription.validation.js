@@ -5,8 +5,11 @@ exports.validateCreatePrescription = (payload) => {
     throw error;
   }
 
-  if (!Array.isArray(payload.medicines) || payload.medicines.length === 0) {
-    const error = new Error('At least one medicine is required');
+  const hasMedicines = Array.isArray(payload.medicines) && payload.medicines.length > 0;
+  const hasNotesOrImage = Boolean(payload.notes && payload.notes.trim()) || Boolean(payload.imageData);
+
+  if (!hasMedicines && !hasNotesOrImage) {
+    const error = new Error('Please write prescription details or add medicines');
     error.statusCode = 400;
     throw error;
   }

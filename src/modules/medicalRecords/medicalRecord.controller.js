@@ -20,6 +20,31 @@ exports.uploadRecord = async (req, res, next) => {
   }
 };
 
+exports.uploadBulkRecords = async (req, res, next) => {
+  try {
+    const files = req.files || (req.file ? [req.file] : []);
+    validation.validateUploadBulkRecords(req.body, files);
+    const records = await medicalRecordService.uploadBulkRecords({
+      patientId: req.body.patientId,
+      appointmentId: req.body.appointmentId,
+      uploadedBy: req.user?._id,
+      files,
+      title: req.body.title,
+      description: req.body.description,
+      notes: req.body.notes,
+      recordDate: req.body.record_date,
+    });
+    res.status(201).json({
+      success: true,
+      message: `${records.length} medical record(s) uploaded successfully`,
+      count: records.length,
+      data: records,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getRecordById = async (req, res, next) => {
   try {
     const record = await medicalRecordService.getRecordById(req.params.id);

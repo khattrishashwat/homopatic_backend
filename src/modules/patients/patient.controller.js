@@ -6,6 +6,8 @@ exports.createPatient = async (req, res, next) => {
     validation.validatePatientPayload(req.body);
     const patient = await patientService.createPatient({
       userId: req.user?._id,
+      clinicCode: req.body.clinicCode || req.body.clinic_code || '01',
+      relationship: req.body.relationship,
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
@@ -73,6 +75,28 @@ exports.getPatientProfile = async (req, res, next) => {
   try {
     const profile = await patientService.getPatientProfile(req.params.id);
     res.json({ success: true, data: profile });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createFamily = async (req, res, next) => {
+  try {
+    const result = await patientService.createFamily({
+      ...req.body,
+      userId: req.user?._id,
+    });
+    res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.bulkImport = async (req, res, next) => {
+  try {
+    const { patients } = req.body;
+    const result = await patientService.bulkImport(patients, req.user?._id);
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
   }

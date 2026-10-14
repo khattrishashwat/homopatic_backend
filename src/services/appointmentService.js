@@ -97,8 +97,11 @@ exports.bookAppointment = async (data) => {
 
   let planType = data.planType;
   if (!planType && data.medicineDuration) {
-    if (data.medicineDuration === '7_days') planType = 'SEVEN_DAYS';
+    if (data.medicineDuration === '15_days' || data.medicineDuration === '7_days') planType = 'FIFTEEN_DAYS';
     else if (data.medicineDuration === '30_days' || data.medicineDuration === '1_month') planType = 'ONE_MONTH';
+  }
+  if (planType === 'SEVEN_DAYS') {
+    planType = 'FIFTEEN_DAYS';
   }
 
   // Fetch optional dynamic pricing overrides from SiteSettings
@@ -158,7 +161,9 @@ exports.bookAppointment = async (data) => {
     address: data.address ? data.address.trim() : undefined,
     city: data.city ? data.city.trim() : undefined,
     pincode: data.pincode ? data.pincode.trim() : undefined,
-    medicineDuration: pricing.planType === 'SEVEN_DAYS' ? '7_days' : (pricing.planType === 'ONE_MONTH' ? '30_days' : undefined),
+    medicineDuration: (pricing.planType === 'FIFTEEN_DAYS' || pricing.planType === 'SEVEN_DAYS')
+      ? '15_days'
+      : (pricing.planType === 'ONE_MONTH' ? '30_days' : undefined),
     courierCharge: 0,
     age: data.age ? Number(data.age) : undefined,
     consultation_type: consultationType,

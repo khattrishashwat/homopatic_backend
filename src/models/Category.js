@@ -31,7 +31,7 @@ const CategorySchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["blog", "product", "both"],
+      enum: ["blog", "product", "both", "health_concern"],
       default: "both",
     },
   },

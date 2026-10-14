@@ -27,6 +27,37 @@ exports.uploadRecord = async ({ patientId, appointmentId, uploadedBy, file, titl
   });
 };
 
+exports.uploadBulkRecords = async ({ patientId, appointmentId, uploadedBy, files, title, description, notes, recordDate }) => {
+  const patientQuery = patientId?.match(/^[0-9a-fA-F]{24}$/)
+    ? { $or: [{ _id: patientId }, { patientId }] }
+    : { patientId };
+  const patient = await Patient.findOne(patientQuery);
+  if (!patient) {
+    const error = new Error('Patient not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const createdRecords = [];
+  for (const file of files) {
+    const record = await MedicalRecord.create({
+      patient: patient._id,
+      appointment: appointmentId,
+      uploaded_by: uploadedBy,
+      title: title ? `${title} - ${file.originalname}` : file.originalname,
+      description,
+      file_url: `/uploads/${file.filename}`,
+      file_path: file.path,
+      file_type: file.mimetype,
+      record_date: recordDate || new Date(),
+      notes,
+    });
+    createdRecords.push(record);
+  }
+
+  return createdRecords;
+};
+
 exports.getRecordById = async (id) => {
   const record = await MedicalRecord.findById(id).populate('patient appointment uploaded_by');
   if (!record) {
@@ -40,7 +71,15 @@ exports.getRecordById = async (id) => {
 exports.listRecords = async (filters = {}) => {
   const query = {};
   if (filters.patientId) {
-    query.patient = filters.patientId;
+    const patientQuery = filters.patientId?.match(/^[0-9a-fA-F]{24}$/)
+      ? { $or: [{ _id: filters.patientId }, { patientId: filters.patientId }] }
+      : { patientId: filters.patientId };
+    const patient = await Patient.findOne(patientQuery);
+    if (patient) {
+      query.patient = patient._id;
+    } else {
+      query.patient = filters.patientId;
+    }
   }
   if (filters.appointmentId) {
     query.appointment = filters.appointmentId;
@@ -50,11 +89,11 @@ exports.listRecords = async (filters = {}) => {
   }
 
   const page = parseInt(filters.page, 10) || 1;
-  const limit = parseInt(filters.limit, 10) || 20;
+  const limit = parseInt(filters.limit, 10) || 100;
   const skip = (page - 1) * limit;
 
   const records = await MedicalRecord.find(query)
-    .sort({ created_at: -1 })
+    .sort({ record_date: -1, created_at: -1 })
     .skip(skip)
     .limit(limit)
     .populate('patient appointment uploaded_by');

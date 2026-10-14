@@ -5,6 +5,8 @@ const patientController = require('../../modules/patients/patient.controller');
 
 router.use(authMiddleware.requireAdmin);
 router.post('/', patientController.createPatient);
+router.post('/family', patientController.createFamily);
+router.post('/bulk-import', patientController.bulkImport);
 router.get('/', patientController.listPatients);
 router.get('/:id', patientController.getPatientById);
 router.patch('/:id', patientController.updatePatient);

@@ -31,9 +31,13 @@ function generateAppointmentAdminEmail(data = {}) {
   const isOnline = String(rawType).toLowerCase() === 'online';
   const bookingTypeDisplay = isOnline ? 'Online' : 'Offline';
 
-  const planType = appointment.planType || (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' : (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null));
+  const planType = appointment.planType || (
+    appointment.medicineDuration === '15_days' ? 'FIFTEEN_DAYS' :
+    (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' :
+    (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null))
+  );
   const planDisplay = isOnline
-    ? (planType === 'SEVEN_DAYS' ? '7 Days Plan' : (planType === 'ONE_MONTH' ? '1 Month Plan' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan')))
+    ? (planType === 'FIFTEEN_DAYS' ? '15 Days Plan' : (planType === 'SEVEN_DAYS' ? '7 Days Plan' : (planType === 'ONE_MONTH' ? '1 Month Plan' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan'))))
     : null;
 
   const appointmentDate = slot?.startTime || appointment.appointmentDate;

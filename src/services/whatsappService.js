@@ -61,8 +61,14 @@ exports.formatAppointmentMessage = (appointment, slot) => {
   const isOnline = String(rawType).toLowerCase() === 'online';
   const modeText = isOnline ? 'Online Consultation' : 'Clinic Visit (Offline)';
 
-  const planType = appointment.planType || (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' : (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null));
-  const planTitle = isOnline ? (planType === 'SEVEN_DAYS' ? '7 Days Plan' : (planType === 'ONE_MONTH' ? '1 Month Plan' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan'))) : null;
+  const planType = appointment.planType || (
+    appointment.medicineDuration === '15_days' ? 'FIFTEEN_DAYS' :
+    (appointment.medicineDuration === '7_days' ? 'SEVEN_DAYS' :
+    (appointment.medicineDuration === '30_days' || appointment.medicineDuration === '1_month' ? 'ONE_MONTH' : null))
+  );
+  const planTitle = isOnline
+    ? (planType === 'FIFTEEN_DAYS' ? '15 Days Plan' : (planType === 'SEVEN_DAYS' ? '7 Days Plan' : (planType === 'ONE_MONTH' ? '1 Month Plan' : (appointment.medicineDuration ? appointment.medicineDuration.replace('_', ' ') : 'Subscription Plan'))))
+    : null;
 
   const totalAmountNum = appointment.totalAmount !== undefined ? appointment.totalAmount : appointment.amount;
   const amountStr = totalAmountNum !== undefined ? `₹${totalAmountNum.toLocaleString('en-IN')}` : '-';

@@ -5,6 +5,7 @@ const medicalRecordController = require('../../modules/medicalRecords/medicalRec
 const multer = require('../../utils/multer');
 
 router.use(authMiddleware.requireAdmin);
+router.post('/bulk', multer.array('records', 30), medicalRecordController.uploadBulkRecords);
 router.post('/', multer.single('record'), medicalRecordController.uploadRecord);
 router.get('/', medicalRecordController.listRecords);
 router.get('/:id', medicalRecordController.getRecordById);

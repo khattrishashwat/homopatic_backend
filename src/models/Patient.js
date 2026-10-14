@@ -22,6 +22,8 @@ const PatientSchema = new mongoose.Schema({
   },
   family_group: { type: String },
   family_members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Patient' }],
+  relationship: { type: String },
+  clinic_code: { type: String, default: '01' },
   medical_history: [{ type: String }],
   notes: { type: String },
   active: { type: Boolean, default: true },

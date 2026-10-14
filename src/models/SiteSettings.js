@@ -36,6 +36,7 @@ const SiteSettingsSchema = new mongoose.Schema({
     advance_booking_days: { type: Number, default: 30 },
     enable_online_booking: { type: Boolean, default: true },
     pricing: {
+      online_15_days: { type: Number, default: 500 },
       online_7_days: { type: Number, default: 500 },
       online_1_month: { type: Number, default: 1000 },
       offline: { type: Number, default: 200 },

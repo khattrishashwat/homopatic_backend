@@ -178,6 +178,7 @@ app.use('/api/blog', webBlogRoutes);
 app.use('/api/products', webProductRoutes);
 
 app.use('/api/category', webCategoryRoutes);
+app.use('/api/categories', webCategoryRoutes);
 
 // ======================================================
 // SEO Routes

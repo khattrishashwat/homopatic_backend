@@ -47,7 +47,7 @@ const AppointmentSchema = new mongoose.Schema({
   },
   planType: {
     type: String,
-    enum: ['SEVEN_DAYS', 'ONE_MONTH', null],
+    enum: ['FIFTEEN_DAYS', 'SEVEN_DAYS', 'ONE_MONTH', null],
     default: null,
   },
   planDuration: {
