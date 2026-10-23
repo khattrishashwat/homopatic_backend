@@ -5,11 +5,13 @@ const appointmentController = require('../../modules/appointments/appointment.co
 
 router.use(authMiddleware.requireAdmin);
 router.get('/', appointmentController.adminListAppointments);
+router.get('/export/excel', appointmentController.exportExcel);
 router.patch('/:id/status', appointmentController.adminUpdateStatus);
 router.patch('/:id/reschedule', appointmentController.adminRescheduleAppointment);
 router.patch('/:id/consultation-mode', appointmentController.adminSetConsultationMode);
 router.patch('/:id/payment-status', appointmentController.adminUpdatePaymentStatus);
 router.patch('/:id/complete', appointmentController.adminMarkComplete);
 router.patch('/:id/missed', appointmentController.adminMarkMissed);
+router.delete('/:id', appointmentController.adminDeleteAppointment);
 
 module.exports = router;

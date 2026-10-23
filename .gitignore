@@ -7,6 +7,9 @@ node_modules/
 serviceAccountKey.json
 *serviceAccount*.json
 
+.env
+.env.*
+!.env.example
 # Logs
 logs/
 *.log

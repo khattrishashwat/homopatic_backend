@@ -1,5 +1,7 @@
 const blogService = require('../../services/blogService');
-const multer = require('../../utils/multer');
+const Blog = require('../../models/Blog');
+const s3Service = require('../../services/s3Service');
+const path = require('path');
 
 /**
  * Get all published blogs (public API)
@@ -92,10 +94,18 @@ exports.createBlog = async (req, res, next) => {
       blogData.featured_image = rawImage.trim();
     }
 
-    // Handle image upload (takes precedence)
+    // Handle image upload (S3 only)
     if (req.file) {
-      blogData.featured_image = `/uploads/${req.file.filename}`;
-      blogData.featured_image_path = req.file.path;
+      const s3Res = await s3Service.uploadFile({
+        buffer: req.file.buffer,
+        module: 'blogs',
+        category: 'featured',
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      blogData.featured_image = s3Res.url || s3Res.canonicalUrl;
+      blogData.featured_image_s3_key = s3Res.key;
+      blogData.storage_type = 's3';
     }
 
     const blog = await blogService.createBlog(blogData, req.user?._id);
@@ -110,6 +120,9 @@ exports.createBlog = async (req, res, next) => {
  */
 exports.updateBlog = async (req, res, next) => {
   try {
+    const blogId = req.params.id;
+    const existingBlog = await Blog.findById(blogId);
+
     const rawImage = req.body.featured_image || req.body.image || req.body.imageUrl || req.body.featuredImage;
 
     const blogData = {
@@ -130,13 +143,25 @@ exports.updateBlog = async (req, res, next) => {
       blogData.featured_image = rawImage.trim();
     }
 
-    // Handle image upload (takes precedence)
+    // Handle image upload & S3 cleanup (S3 only)
     if (req.file) {
-      blogData.featured_image = `/uploads/${req.file.filename}`;
-      blogData.featured_image_path = req.file.path;
+      if (existingBlog && existingBlog.featured_image_s3_key) {
+        await s3Service.deleteFile(existingBlog.featured_image_s3_key).catch(() => {});
+      }
+      const s3Res = await s3Service.uploadFile({
+        buffer: req.file.buffer,
+        module: 'blogs',
+        recordId: blogId,
+        category: 'featured',
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+      });
+      blogData.featured_image = s3Res.url || s3Res.canonicalUrl;
+      blogData.featured_image_s3_key = s3Res.key;
+      blogData.storage_type = 's3';
     }
 
-    const blog = await blogService.updateBlog(req.params.id, blogData, req.user?._id);
+    const blog = await blogService.updateBlog(blogId, blogData, req.user?._id);
     res.json({ success: true, data: blog });
   } catch (error) {
     next(error);
@@ -144,10 +169,19 @@ exports.updateBlog = async (req, res, next) => {
 };
 
 /**
- * Delete blog (admin)
+ * Delete blog (admin) - cleans up S3 assets
  */
 exports.deleteBlog = async (req, res, next) => {
   try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: 'Blog not found' });
+    }
+
+    if (blog.featured_image_s3_key) {
+      await s3Service.deleteFile(blog.featured_image_s3_key).catch(() => {});
+    }
+
     await blogService.deleteBlog(req.params.id);
     res.json({ success: true, message: 'Blog deleted successfully' });
   } catch (error) {

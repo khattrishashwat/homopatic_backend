@@ -1,5 +1,5 @@
 const SiteSettings = require('../../models/SiteSettings');
-const fs = require('fs').promises;
+const s3Service = require('../../services/s3Service');
 
 exports.getSiteSettings = async (req, res, next) => {
   try {
@@ -26,30 +26,54 @@ exports.updateSiteSettings = async (req, res, next) => {
       settings = new SiteSettings();
     }
 
-    // Handle logo upload
-    if (req.files?.logo) {
-      if (settings.logo_path) {
+    // Handle logo upload (S3 only)
+    if (req.files?.logo?.[0]) {
+      const logoFile = req.files.logo[0];
+      if (settings.logo_s3_key) {
         try {
-          await fs.unlink(settings.logo_path);
+          await s3Service.deleteFile(settings.logo_s3_key);
         } catch (err) {
-          console.error('Failed to delete old logo:', err);
+          console.warn('Failed to delete old logo from S3:', err.message);
         }
       }
-      settings.logo_url = `/uploads/${req.files.logo[0].filename}`;
-      settings.logo_path = req.files.logo[0].path;
+
+      const s3Result = await s3Service.uploadFile({
+        buffer: logoFile.buffer,
+        originalname: logoFile.originalname,
+        mimetype: logoFile.mimetype,
+        module: 'settings',
+        category: 'logo',
+        recordId: 'site',
+        metadata: { field: 'logo' },
+      });
+      settings.logo_url = s3Result.url;
+      settings.logo_s3_key = s3Result.key;
+      settings.logo_path = null;
     }
 
-    // Handle favicon upload
-    if (req.files?.favicon) {
-      if (settings.favicon_path) {
+    // Handle favicon upload (S3 only)
+    if (req.files?.favicon?.[0]) {
+      const faviconFile = req.files.favicon[0];
+      if (settings.favicon_s3_key) {
         try {
-          await fs.unlink(settings.favicon_path);
+          await s3Service.deleteFile(settings.favicon_s3_key);
         } catch (err) {
-          console.error('Failed to delete old favicon:', err);
+          console.warn('Failed to delete old favicon from S3:', err.message);
         }
       }
-      settings.favicon_url = `/uploads/${req.files.favicon[0].filename}`;
-      settings.favicon_path = req.files.favicon[0].path;
+
+      const s3Result = await s3Service.uploadFile({
+        buffer: faviconFile.buffer,
+        originalname: faviconFile.originalname,
+        mimetype: faviconFile.mimetype,
+        module: 'settings',
+        category: 'favicon',
+        recordId: 'site',
+        metadata: { field: 'favicon' },
+      });
+      settings.favicon_url = s3Result.url;
+      settings.favicon_s3_key = s3Result.key;
+      settings.favicon_path = null;
     }
 
     // Update text fields

@@ -1,5 +1,6 @@
 const orderService = require('./order.service');
 const validation = require('./order.validation');
+const excelService = require('../../services/excelService');
 
 exports.createOrder = async (req, res, next) => {
   try {
@@ -81,6 +82,9 @@ exports.listOrders = async (req, res, next) => {
       userId: req.query.userId,
       order_status: req.query.order_status,
       payment_status: req.query.payment_status,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      search: req.query.search,
       page: req.query.page,
       limit: req.query.limit,
     };
@@ -108,3 +112,53 @@ exports.updatePaymentStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.deleteOrder = async (req, res, next) => {
+  try {
+    const force = req.query.force === 'true' || req.body?.force === true;
+    const result = await orderService.deleteOrder(req.params.id, { force });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.dispatchOrder = async (req, res, next) => {
+  try {
+    const { tracking_number, courier_name, notes, allowUnpaid } = req.body || {};
+    const order = await orderService.dispatchOrder(req.params.id, {
+      tracking_number,
+      courier_name,
+      notes,
+      allowUnpaid,
+    });
+    res.json({
+      success: true,
+      data: order,
+      message: `Order #${order.order_number} marked as dispatched successfully`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.exportExcel = async (req, res, next) => {
+  try {
+    const format = req.query.format === 'csv' ? 'csv' : 'xlsx';
+    const result = await excelService.exportOrders({ query: req.query, format });
+    res.json({
+      success: true,
+      message: `Exported ${result.count} orders to ${result.filename}`,
+      data: {
+        downloadUrl: result.downloadUrl,
+        filename: result.filename,
+        s3Key: result.key,
+        count: result.count,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+

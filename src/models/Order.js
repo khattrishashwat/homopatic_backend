@@ -35,7 +35,7 @@ const OrderSchema = new mongoose.Schema({
   razorpay_signature: { type: String },
   order_status: {
     type: String,
-    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'],
+    enum: ['pending', 'processing', 'shipped', 'dispatched', 'delivered', 'cancelled', 'refunded'],
     default: 'pending',
   },
   payment_status: {
@@ -43,6 +43,9 @@ const OrderSchema = new mongoose.Schema({
     enum: ['pending', 'completed', 'failed', 'refunded'],
     default: 'pending',
   },
+  dispatch_date: { type: Date },
+  tracking_number: { type: String, trim: true },
+  courier_name: { type: String, trim: true },
   notes: { type: String },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },

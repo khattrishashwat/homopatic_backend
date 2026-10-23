@@ -1,5 +1,6 @@
 const appointmentService = require('./appointment.service');
 const validation = require('./appointment.validation');
+const excelService = require('../../services/excelService');
 
 exports.createAppointment = async (req, res, next) => {
   try {
@@ -115,6 +116,8 @@ exports.adminListAppointments = async (req, res, next) => {
       bookingType: req.query.bookingType || req.query.booking_type,
       planType: req.query.planType || req.query.plan_type,
       payment_status: req.query.payment_status || req.query.paymentStatus,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
     };
     const appointments = await appointmentService.getAllAppointments(filters);
     res.json({ success: true, data: appointments });
@@ -189,3 +192,33 @@ exports.adminMarkMissed = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.adminDeleteAppointment = async (req, res, next) => {
+  try {
+    const result = await appointmentService.deleteAppointment(req.params.id);
+    res.json({ success: true, message: result.message || 'Appointment deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.exportExcel = async (req, res, next) => {
+  try {
+    const format = req.query.format === 'csv' ? 'csv' : 'xlsx';
+    const result = await excelService.exportAppointments({ query: req.query, format });
+    res.json({
+      success: true,
+      message: `Exported ${result.count} appointments to ${result.filename}`,
+      data: {
+        downloadUrl: result.downloadUrl,
+        filename: result.filename,
+        s3Key: result.key,
+        count: result.count,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+

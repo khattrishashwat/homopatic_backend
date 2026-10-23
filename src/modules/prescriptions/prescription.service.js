@@ -1,11 +1,51 @@
-const fsPromises = require('fs').promises;
-const path = require('path');
 const Prescription = require('../../models/Prescription');
 const Patient = require('../../models/Patient');
 const Appointment = require('../../models/Appointment');
 const Counter = require('../../models/Counter');
 const SiteSettings = require('../../models/SiteSettings');
 const { generatePrescriptionPdf } = require('../../utils/pdfGenerator');
+const s3Service = require('../../services/s3Service');
+
+/**
+ * Resolves fresh short-lived presigned download URLs for prescriptions stored in S3,
+ * ensuring all images and PDFs point directly to S3.
+ */
+async function attachPresignedUrls(prescription) {
+  if (!prescription) return prescription;
+  const doc = prescription.toObject ? prescription.toObject() : { ...prescription };
+  const bucket = doc.image_s3_bucket || doc.pdf_s3_bucket || process.env.AWS_S3_BUCKET || 'mdshomoeopathy-patient-files-2026';
+  const region = s3Service.AWS_REGION || 'ap-south-1';
+
+  if (doc.image_s3_key) {
+    try {
+      doc.image_url = await s3Service.getPresignedDownloadUrl(doc.image_s3_key, {
+        expiresIn: 86400, // 24 hours
+      });
+    } catch (err) {
+      console.warn(`[Prescription S3 Image URL Error for ${doc._id}]:`, err.message);
+      doc.image_url = `https://${bucket}.s3.${region}.amazonaws.com/${doc.image_s3_key.replace(/^\/+/, '')}`;
+    }
+  } else if (doc.image_url && !doc.image_url.startsWith('http')) {
+    const key = doc.image_url.replace(/^\/+uploads\/prescriptions\//, 'prescriptions/').replace(/^\/+/, '');
+    doc.image_url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+  }
+
+  if (doc.pdf_s3_key) {
+    try {
+      doc.pdf_url = await s3Service.getPresignedDownloadUrl(doc.pdf_s3_key, {
+        expiresIn: 86400, // 24 hours
+        downloadFilename: `${doc.prescriptionNumber || 'prescription'}.pdf`,
+      });
+    } catch (err) {
+      console.warn(`[Prescription S3 PDF URL Error for ${doc._id}]:`, err.message);
+      doc.pdf_url = `/api/admin/prescriptions/${doc._id}/pdf`;
+    }
+  } else if (doc.pdf_url && !doc.pdf_url.startsWith('http')) {
+    doc.pdf_url = `/api/admin/prescriptions/${doc._id}/pdf`;
+  }
+
+  return doc;
+}
 
 exports.generatePrescriptionNumber = async () => {
   const counterKey = 'prescription_number';
@@ -108,24 +148,40 @@ exports.createPrescription = async (data) => {
     phone: patient.phone,
   };
 
-  let imageUrl = undefined;
-  let imagePath = undefined;
+  let imageUrl = data.imageUrl || data.image_url || undefined;
+  let imageS3Key = data.image_s3_key || data.imageS3Key || undefined;
+  let imageS3Bucket = data.image_s3_bucket || data.imageS3Bucket || (imageS3Key ? process.env.AWS_S3_BUCKET : undefined);
+
   if (data.imageData) {
     try {
-      const folder = 'prescriptions';
-      const uploadPath = path.join(__dirname, '..', '..', 'uploads', folder);
-      await fsPromises.mkdir(uploadPath, { recursive: true });
-      const safeId = String(patient.patientId || patient._id).replace(/[^a-zA-Z0-9]/g, '_');
+      const safeId = String(patient.patientId || patient._id).replace(/[^a-zA-Z0-9_-]/g, '_');
       const filename = `${Date.now()}-pad-${safeId}.jpg`;
-      const fullFilePath = path.join(uploadPath, filename);
-
       const base64Data = data.imageData.replace(/^data:image\/\w+;base64,/, '');
-      await fsPromises.writeFile(fullFilePath, base64Data, 'base64');
-      imageUrl = `/uploads/${folder}/${filename}`;
-      imagePath = fullFilePath;
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+
+      // Upload directly to S3 — NEVER save to local disk
+      const s3Img = await s3Service.uploadPatientFile({
+        buffer: imageBuffer,
+        patientId: patient.patientId || patient._id,
+        category: 'prescriptions',
+        originalname: filename,
+        mimetype: 'image/jpeg',
+        metadata: {
+          prescriptionNumber,
+          type: 'prescription-canvas-image',
+        },
+      });
+      imageS3Key = s3Img.key;
+      imageS3Bucket = s3Img.bucket;
+      imageUrl = s3Img.url || s3Img.canonicalUrl;
     } catch (imgErr) {
-      console.error('[Save prescription image error]:', imgErr.message);
+      console.error('[Prescription S3 image upload error]:', imgErr.message);
+      throw new Error(`Failed to upload prescription image to AWS S3: ${imgErr.message}`);
     }
+  }
+
+  if (imageS3Key && !imageUrl) {
+    imageUrl = s3Service.getCanonicalUrl(imageS3Key);
   }
 
   const prescription = await Prescription.create({
@@ -143,7 +199,9 @@ exports.createPrescription = async (data) => {
     advice: data.advice || {},
     notes: data.notes || '',
     image_url: imageUrl,
-    image_path: imagePath,
+    image_s3_key: imageS3Key,
+    image_s3_bucket: imageS3Bucket,
+    storage_type: 's3',
   });
 
   try {
@@ -152,14 +210,30 @@ exports.createPrescription = async (data) => {
       patient,
     });
 
-    prescription.pdf_url = pdfData.pdfUrl;
-    prescription.pdf_path = pdfData.pdfPath;
-    await prescription.save();
+    // Upload generated PDF directly to S3 — NEVER save to local disk
+    if (pdfData && pdfData.buffer) {
+      const s3Pdf = await s3Service.uploadPatientFile({
+        buffer: pdfData.buffer,
+        patientId: patient.patientId || patient._id,
+        category: 'prescriptions',
+        originalname: `${prescriptionNumber}.pdf`,
+        mimetype: 'application/pdf',
+        metadata: {
+          prescriptionNumber,
+          patientId: String(patient.patientId || patient._id),
+        },
+      });
+      prescription.pdf_s3_key = s3Pdf.key;
+      prescription.pdf_s3_bucket = s3Pdf.bucket;
+      prescription.pdf_url = s3Pdf.url || s3Pdf.canonicalUrl;
+      prescription.storage_type = 's3';
+      await prescription.save();
+    }
   } catch (pdfErr) {
-    console.error('[generatePrescriptionPdf error]:', pdfErr.message);
+    console.error('[Prescription PDF S3 upload error]:', pdfErr.message);
   }
 
-  return prescription;
+  return await attachPresignedUrls(prescription);
 };
 
 exports.getPrescriptionById = async (id) => {
@@ -173,7 +247,7 @@ exports.getPrescriptionById = async (id) => {
     error.statusCode = 404;
     throw error;
   }
-  return prescription;
+  return await attachPresignedUrls(prescription);
 };
 
 exports.updatePrescription = async (id, data) => {
@@ -194,30 +268,56 @@ exports.updatePrescription = async (id, data) => {
 
   await prescription.save();
 
-  // Regenerate PDF
+  // Regenerate PDF and upload to S3 — NEVER save to local disk
   try {
     const patient = await Patient.findById(prescription.patient);
     const pdfData = await generatePrescriptionPdf({
       ...prescription.toObject(),
       patient,
     });
-    prescription.pdf_url = pdfData.pdfUrl;
-    prescription.pdf_path = pdfData.pdfPath;
-    await prescription.save();
+
+    if (pdfData && pdfData.buffer) {
+      const s3Pdf = await s3Service.uploadPatientFile({
+        buffer: pdfData.buffer,
+        patientId: patient?.patientId || patient?._id || prescription.patient,
+        category: 'prescriptions',
+        originalname: `${prescription.prescriptionNumber}.pdf`,
+        mimetype: 'application/pdf',
+        metadata: {
+          prescriptionNumber: prescription.prescriptionNumber,
+          updatedAt: new Date().toISOString(),
+        },
+      });
+      prescription.pdf_s3_key = s3Pdf.key;
+      prescription.pdf_s3_bucket = s3Pdf.bucket;
+      prescription.pdf_url = s3Pdf.url || s3Pdf.canonicalUrl;
+      prescription.storage_type = 's3';
+      await prescription.save();
+    }
   } catch (pdfErr) {
     console.error('[updatePrescription pdf regeneration error]:', pdfErr.message);
   }
 
-  return prescription;
+  return await attachPresignedUrls(prescription);
 };
 
 exports.deletePrescription = async (id) => {
-  const prescription = await Prescription.findByIdAndDelete(id);
+  const prescription = await Prescription.findById(id);
   if (!prescription) {
     const error = new Error('Prescription not found');
     error.statusCode = 404;
     throw error;
   }
+
+  // Delete from S3
+  if (prescription.pdf_s3_key) {
+    await s3Service.deletePatientFile(prescription.pdf_s3_key).catch(() => {});
+  }
+  if (prescription.image_s3_key) {
+    await s3Service.deletePatientFile(prescription.image_s3_key).catch(() => {});
+  }
+
+  await Prescription.findByIdAndDelete(id);
   return prescription;
 };
 
@@ -246,7 +346,6 @@ exports.listPrescriptions = async (filters = {}) => {
 
   if (filters.search) {
     const term = filters.search.trim();
-    // Search in prescriptionNumber or matching patient name/id
     const matchingPatients = await Patient.find({
       $or: [
         { name: { $regex: term, $options: 'i' } },
@@ -287,8 +386,114 @@ exports.listPrescriptions = async (filters = {}) => {
 
   const total = await Prescription.countDocuments(query);
 
+  const populatedPrescriptions = await Promise.all(prescriptions.map(attachPresignedUrls));
+
   return {
-    data: prescriptions,
+    data: populatedPrescriptions,
     pagination: { total, page, limit, pages: Math.ceil(total / limit) },
   };
+};
+
+/**
+ * Access-controlled prescription PDF retrieval.
+ * Supports streaming from S3 or sending local PDF with permission validation.
+ */
+exports.getPrescriptionPdfStream = async (id, currentUser) => {
+  const query = id.match(/^[0-9a-fA-F]{24}$/)
+    ? { $or: [{ _id: id }, { prescriptionNumber: id }] }
+    : { prescriptionNumber: id };
+
+  const prescription = await Prescription.findOne(query).populate('patient doctor');
+  if (!prescription) {
+    const error = new Error('Prescription not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Authorization check
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isDoctor =
+    currentUser &&
+    prescription.doctor &&
+    prescription.doctor._id.toString() === currentUser._id.toString();
+  const isOwner =
+    currentUser &&
+    prescription.patient &&
+    prescription.patient.user &&
+    prescription.patient.user.toString() === currentUser._id.toString();
+
+  if (!isAdmin && !isDoctor && !isOwner) {
+    const error = new Error('You do not have permission to access this prescription');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const filename = `${prescription.prescriptionNumber || 'prescription'}.pdf`;
+
+  if (prescription.pdf_s3_key) {
+    const s3Result = await s3Service.getFileStream(prescription.pdf_s3_key);
+    return {
+      type: 's3',
+      stream: s3Result.stream,
+      contentType: 'application/pdf',
+      contentLength: s3Result.contentLength,
+      filename,
+    };
+  }
+
+  const error = new Error('Prescription PDF is not available');
+  error.statusCode = 404;
+  throw error;
+};
+
+/**
+ * Access-controlled prescription image stream directly from S3.
+ */
+exports.getPrescriptionImageStream = async (id, currentUser) => {
+  const query = id.match(/^[0-9a-fA-F]{24}$/)
+    ? { $or: [{ _id: id }, { prescriptionNumber: id }] }
+    : { prescriptionNumber: id };
+
+  const prescription = await Prescription.findOne(query).populate('patient doctor');
+  if (!prescription) {
+    const error = new Error('Prescription not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Authorization check
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const isDoctor =
+    currentUser &&
+    prescription.doctor &&
+    prescription.doctor._id.toString() === currentUser._id.toString();
+  const isOwner =
+    currentUser &&
+    prescription.patient &&
+    prescription.patient.user &&
+    prescription.patient.user.toString() === currentUser._id.toString();
+
+  if (!isAdmin && !isDoctor && !isOwner) {
+    const error = new Error('You do not have permission to access this prescription');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const filename = `${prescription.prescriptionNumber || 'prescription'}.jpg`;
+
+  if (prescription.image_s3_key) {
+    const s3Result = await s3Service.getFileStream(prescription.image_s3_key);
+    return {
+      type: 's3',
+      stream: s3Result.stream,
+      contentType: s3Result.contentType || 'image/jpeg',
+      contentLength: s3Result.contentLength,
+      filename,
+      url: prescription.image_url,
+    };
+  }
+
+  const error = new Error('Prescription image is not available');
+  error.statusCode = 404;
+  throw error;
 };

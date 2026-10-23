@@ -65,8 +65,12 @@ const ProductSchema = new mongoose.Schema(
       ref: "Category",
     },
 
-    // Images
+    // Images & Media
     image: {
+      type: String,
+    },
+
+    image_s3_key: {
       type: String,
     },
 
@@ -79,8 +83,17 @@ const ProductSchema = new mongoose.Schema(
       {
         url: String,
         alt: String,
+        s3_key: String,
       },
     ],
+
+    video_url: {
+      type: String,
+    },
+
+    video_s3_key: {
+      type: String,
+    },
 
     // Product Attributes
     attributes: {
