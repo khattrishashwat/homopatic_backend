@@ -63,6 +63,16 @@ const BlogSchema = new mongoose.Schema(
       type: String,
     },
 
+    featured_image_s3_key: {
+      type: String,
+    },
+
+    storage_type: {
+      type: String,
+      enum: ['s3'],
+      default: 's3',
+    },
+
     featured_image_alt: {
       type: String,
       trim: true,

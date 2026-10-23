@@ -1,25 +1,22 @@
-const fs = require('fs');
-const fsPromises = fs.promises;
-const path = require('path');
 const PDFDocument = require('pdfkit');
 
-const ensureUploadsPath = async (folder) => {
-  const fullPath = path.join(__dirname, '..', 'uploads', folder);
-  await fsPromises.mkdir(fullPath, { recursive: true });
-  return fullPath;
-};
-
 exports.generatePrescriptionPdf = async (prescription) => {
-  const folder = 'prescriptions';
-  const uploadPath = await ensureUploadsPath(folder);
-  const filename = `${Date.now()}-prescription-${prescription._id}.pdf`;
-  const filePath = path.join(uploadPath, filename);
-  const writeStream = fs.createWriteStream(filePath);
+  return new Promise((resolve, reject) => {
+    const filename = `${prescription.prescriptionNumber || prescription._id || 'prescription'}.pdf`;
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
+    const chunks = [];
 
-  const doc = new PDFDocument({ size: 'A4', margin: 40 });
-  doc.pipe(writeStream);
+    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      resolve({
+        buffer,
+        filename,
+      });
+    });
+    doc.on('error', (err) => reject(err));
 
-  const primaryColor = '#0f3a5d'; // Deep navy blue
+    const primaryColor = '#0f3a5d'; // Deep navy blue
   const accentColor = '#b91c1c';  // Medical red
   const textColor = '#1f2937';     // Dark neutral
   const mutedColor = '#6b7280';    // Muted gray
@@ -183,15 +180,6 @@ exports.generatePrescriptionPdf = async (prescription) => {
     { width: 360 }
   );
 
-  doc.end();
-
-  await new Promise((resolve, reject) => {
-    writeStream.on('finish', resolve);
-    writeStream.on('error', reject);
+    doc.end();
   });
-
-  return {
-    pdfUrl: `/uploads/${folder}/${filename}`,
-    pdfPath: filePath,
-  };
 };

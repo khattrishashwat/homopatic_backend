@@ -49,6 +49,7 @@ const googleReviewsAdminRoutes = require('./routes/admin/googleReviewsAdminRoute
 const faqAdminRoutes = require('./routes/admin/faqAdminRoutes');
 const chatbotAdminRoutes = require('./routes/admin/chatbotAdminRoutes');
 const couponAdminRoutes = require('./routes/admin/couponAdminRoutes');
+const mediaAdminRoutes = require('./routes/admin/mediaAdminRoutes');
 
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
@@ -66,9 +67,9 @@ const app = express();
 
 app.use(cors());
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ======================================================
 // Serve Uploaded Files
@@ -168,6 +169,8 @@ app.use('/api/admin/faqs', faqAdminRoutes);
 app.use('/api/admin/chatbot/questions', chatbotAdminRoutes);
 
 app.use('/api/admin/coupons', couponAdminRoutes);
+
+app.use('/api/admin/media', mediaAdminRoutes);
 
 // ======================================================
 // SEO Public Routes

@@ -1,0 +1,21 @@
+name,phone,email,dob,gender,street,city,state,postal_code,family_group,relationship,medical_history,notes
+Rajesh Sharma,9811012345,rajesh.sharma@example.com,1978-04-12,male,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,Delhi,110085,FAM-SHARMA,Head,Hypertension; Type 2 Diabetes,Family Head; regular follow-up required
+Sunita Sharma,9811012346,sunita.sharma@example.com,1982-08-25,female,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,Delhi,110085,FAM-SHARMA,Spouse,Hypothyroidism; Migraine,Sensitive to cold weather
+Aarav Sharma,9811012347,aarav.sharma@example.com,2013-11-04,male,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,Delhi,110085,FAM-SHARMA,Child,Allergic Rhinitis; Mild Asthma,Recurrent seasonal cough
+Devendra Sharma,9811012348,devendra.sharma@example.com,1952-01-18,male,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,Delhi,110085,FAM-SHARMA,Parent,Osteoarthritis; Chronic Acidity,Knee pain since 5 years
+Pooja Verma,9822023456,pooja.verma@example.com,1994-06-19,female,"B-12, Green Glen Layout, Bellandur",Bengaluru,Karnataka,560103,FAM-VERMA,Head,PCOD; Chronic Fatigue,Primary patient
+Vikram Verma,9822023457,vikram.verma@example.com,1991-03-10,male,"B-12, Green Glen Layout, Bellandur",Bengaluru,Karnataka,560103,FAM-VERMA,Spouse,Insomnia; Cervical Spondylosis,"IT professional, desk strain"
+Amitabh Sengupta,9833034567,amitabh.sengupta@example.com,1965-09-14,male,"78 Southern Avenue, Lake Market",Kolkata,West Bengal,700029,,,Chronic Sinusitis; Nasal Polyps,Recurrent blocked nose in morning
+Ananya Iyer,9844045678,ananya.iyer@example.com,1998-12-02,female,"14 Anna Salai, T. Nagar",Chennai,Tamil Nadu,600017,,,Atopic Dermatitis; Skin Allergies,Avoid dairy and dust
+Mohammad Tariq,9855056789,mohammad.tariq@example.com,1985-07-21,male,"House 56, Hazratganj Civil Lines",Lucknow,Uttar Pradesh,226001,FAM-KHAN,Head,Acid Reflux; Gastritis,Family Head; digestive complaints
+Zainab Khan,9855056790,zainab.khan@example.com,1989-10-15,female,"House 56, Hazratganj Civil Lines",Lucknow,Uttar Pradesh,226001,FAM-KHAN,Spouse,Iron Deficiency Anemia; Migraine,Family member
+Harpreet Singh,9866067890,harpreet.singh@example.com,1974-05-30,male,"SCO 104, Sector 35-C",Chandigarh,Punjab,160035,,,Sciatica; Lower Back Pain,Aggravated during winter
+Meera Kulkarni,9877078901,meera.kulkarni@example.com,1987-02-14,female,"Flat 15, Swanand Society, Kothrud",Pune,Maharashtra,411038,,,Urticaria; Food Allergies,"Sulpha allergy, homeopathy preferred"
+Rohan Deshmukh,9888089012,rohan.deshmukh@example.com,2001-08-09,male,"Plot 22, Vashi Sector 17",Navi Mumbai,Maharashtra,400703,,,Acne Vulgaris; Dandruff,College student
+Kavita Reddy,9899090123,kavita.reddy@example.com,1983-03-27,female,"Villa 8, Jubilee Hills Phase 3",Hyderabad,Telangana,500033,FAM-REDDY,Head,Rheumatoid Arthritis; Hyperlipidemia,Morning stiffness in finger joints
+Suresh Reddy,9899090124,suresh.reddy@example.com,1980-11-19,male,"Villa 8, Jubilee Hills Phase 3",Hyderabad,Telangana,500033,FAM-REDDY,Spouse,Fatty Liver Grade 1; Gout,High uric acid
+Nikhil Gupta,9911001122,nikhil.gupta@example.com,1993-07-08,male,"404 Vaishali Nagar, Queens Road",Jaipur,Rajasthan,302021,,,Anxiety Neurosis; IBS,Stress-induced bowel irregularity
+Shalini Mishra,9922002233,shalini.mishra@example.com,1990-09-17,female,210 Gomti Nagar Extension,Lucknow,Uttar Pradesh,226010,,,Bronchial Asthma; Dust Allergy,"Carries inhaler, prefers natural remedies"
+Alex DSouza,9933003344,alex.dsouza@example.com,1996-04-05,other,7 Miramar Beach Road,Panaji,Goa,403001,,,Psoriasis; Dry Eczema,Scalp and elbow lesions
+Bhavna Patel,9944004455,bhavna.patel@example.com,1979-10-30,female,"88 Bodakdev, SG Highway",Ahmedabad,Gujarat,380054,,,Kidney Stones (Renal Calculi),3mm left renal calculus
+Gopalakrishnan Nair,9955005566,gopal.nair@example.com,1958-12-25,male,"TC 14/120, Kowdiar Avenue",Thiruvananthapuram,Kerala,695003,,,Benign Prostatic Hyperplasia; Dysuria,"Senior citizen, nocturia complaints"

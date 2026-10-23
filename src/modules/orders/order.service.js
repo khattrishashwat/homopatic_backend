@@ -230,6 +230,30 @@ exports.listOrders = async (filters = {}) => {
   const limit = parseInt(filters.limit, 10) || 20;
   const skip = (page - 1) * limit;
 
+  if (filters.startDate || filters.endDate) {
+    query.created_at = {};
+    if (filters.startDate) {
+      const start = new Date(filters.startDate);
+      start.setHours(0, 0, 0, 0);
+      query.created_at.$gte = start;
+    }
+    if (filters.endDate) {
+      const end = new Date(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      query.created_at.$lte = end;
+    }
+  }
+
+  if (filters.search) {
+    const term = String(filters.search).trim();
+    query.$or = [
+      { order_number: { $regex: term, $options: 'i' } },
+      { customer_name: { $regex: term, $options: 'i' } },
+      { customer_phone: { $regex: term, $options: 'i' } },
+      { customer_email: { $regex: term, $options: 'i' } },
+    ];
+  }
+
   const orders = await Order.find(query)
     .sort({ created_at: -1 })
     .skip(skip)
@@ -267,3 +291,109 @@ exports.updatePaymentStatus = async (id, status) => {
   order.updated_at = new Date();
   return order.save();
 };
+
+exports.deleteOrder = async (id, options = {}) => {
+  const order = await Order.findById(id);
+  if (!order) {
+    const error = new Error('Order not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const isPaid = order.payment_status === 'completed' || order.payment_status === 'paid';
+  const isShipped = ['shipped', 'dispatched', 'delivered'].includes(order.order_status);
+
+  if ((isPaid || isShipped) && !options.force) {
+    const reason = isPaid && isShipped
+      ? 'paid and shipped'
+      : isPaid
+      ? 'already paid'
+      : 'already dispatched/shipped';
+    const error = new Error(
+      `Order #${order.order_number} is ${reason}. To prevent accidental data loss and protect financial audit history, explicit confirmation is required.`
+    );
+    error.statusCode = 400;
+    error.requiresForce = true;
+    throw error;
+  }
+
+  // Safeguard payment records: never delete payment transactions or audit history
+  if (order.payment) {
+    await Payment.findByIdAndUpdate(order.payment, {
+      $set: {
+        description: `Order #${order.order_number} (Deleted on ${new Date().toISOString()})`,
+      },
+      $unset: { order: 1 },
+    });
+  }
+  await Payment.updateMany(
+    { order: order._id },
+    {
+      $set: {
+        description: `Order #${order.order_number} (Deleted on ${new Date().toISOString()})`,
+      },
+      $unset: { order: 1 },
+    }
+  );
+
+  // Permanently delete order
+  await Order.findByIdAndDelete(id);
+
+  return {
+    success: true,
+    message: `Order #${order.order_number} deleted successfully`,
+    order_number: order.order_number,
+  };
+};
+
+exports.dispatchOrder = async (id, data = {}) => {
+  const order = await Order.findById(id).populate('items.product payment user coupon');
+  if (!order) {
+    const error = new Error('Order not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Prevent accidental duplicate dispatch operations
+  if (order.order_status === 'shipped' || order.order_status === 'dispatched') {
+    const error = new Error(
+      `Order #${order.order_number} has already been dispatched.`
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (['cancelled', 'refunded'].includes(order.order_status)) {
+    const error = new Error(`Cannot dispatch an order with status: ${order.order_status}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Validate payment status according to store fulfillment rules
+  const isPaid = order.payment_status === 'completed' || order.payment_status === 'paid';
+  if (!isPaid && !data.allowUnpaid) {
+    const error = new Error(
+      `Order #${order.order_number} cannot be dispatched because payment status is '${order.payment_status}'. Only paid orders can be dispatched.`
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Update order in database
+  order.order_status = 'shipped';
+  order.dispatch_date = new Date();
+  if (data.tracking_number && String(data.tracking_number).trim()) {
+    order.tracking_number = String(data.tracking_number).trim();
+  }
+  if (data.courier_name && String(data.courier_name).trim()) {
+    order.courier_name = String(data.courier_name).trim();
+  }
+  if (data.notes && String(data.notes).trim()) {
+    order.notes = order.notes ? `${order.notes}\n[Dispatch]: ${data.notes.trim()}` : `[Dispatch]: ${data.notes.trim()}`;
+  }
+  order.updated_at = new Date();
+  await order.save();
+
+  return order;
+};
+

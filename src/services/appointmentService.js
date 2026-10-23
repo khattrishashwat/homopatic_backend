@@ -297,6 +297,24 @@ exports.getAllAppointments = async (filters = {}) => {
     query.payment_status = filters.payment_status;
   }
 
+  if (filters.startDate || filters.endDate) {
+    const dateQuery = {};
+    if (filters.startDate) {
+      const start = new Date(filters.startDate);
+      start.setHours(0, 0, 0, 0);
+      dateQuery.$gte = start;
+    }
+    if (filters.endDate) {
+      const end = new Date(filters.endDate);
+      end.setHours(23, 59, 59, 999);
+      dateQuery.$lte = end;
+    }
+    query.$or = [
+      { appointmentDate: dateQuery },
+      { createdAt: dateQuery },
+    ];
+  }
+
   return Appointment.find(query).sort({ createdAt: -1 }).populate('user slot patient');
 };
 
@@ -392,8 +410,55 @@ exports.markAppointmentMissed = async (id) => {
   return exports.updateAppointmentStatus(id, 'missed');
 };
 
-exports.countAppointments = async () => {
-  return Appointment.countDocuments();
+exports.countAppointments = async (query = {}) => {
+  return Appointment.countDocuments(query);
+};
+
+exports.deleteAppointment = async (id) => {
+  const appointment = await Appointment.findById(id);
+  if (!appointment) {
+    const error = new Error('Appointment not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Release the slot if it exists and no other active appointment uses it
+  if (appointment.slot) {
+    const otherAppointment = await Appointment.findOne({
+      _id: { $ne: appointment._id },
+      slot: appointment.slot,
+      status: { $in: ['confirmed', 'pending'] },
+    });
+    if (!otherAppointment) {
+      await Slot.findByIdAndUpdate(appointment.slot, { available: true });
+    }
+  }
+
+  // Preserve medical records and prescriptions by unsetting the appointment reference
+  // so unrelated patient records and files are never accidentally deleted or corrupted
+  const MedicalRecord = require('../models/MedicalRecord');
+  const Prescription = require('../models/Prescription');
+  const Payment = require('../models/Payment');
+
+  await MedicalRecord.updateMany(
+    { appointment: appointment._id },
+    { $unset: { appointment: 1 } }
+  );
+
+  await Prescription.updateMany(
+    { appointment: appointment._id },
+    { $unset: { appointment: 1 } }
+  );
+
+  await Payment.updateMany(
+    { appointment: appointment._id },
+    { $unset: { appointment: 1 } }
+  );
+
+  // Permanently delete appointment from database
+  await Appointment.findByIdAndDelete(id);
+
+  return { success: true, message: 'Appointment deleted successfully' };
 };
 
 exports.getAppointmentsByPatient = async (patientId) => {
@@ -404,3 +469,4 @@ exports.getPricingConfig = async () => {
   const settings = await SiteSettings.findOne().lean().catch(() => null);
   return getEffectivePricingConfig(settings?.appointment_settings?.pricing);
 };
+

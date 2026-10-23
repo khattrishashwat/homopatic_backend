@@ -15,4 +15,5 @@ module.exports = {
   getAppointmentsByPatient: appointmentService.getAppointmentsByPatient,
   verifyAppointmentPayment: appointmentService.verifyAppointmentPayment,
   getPricingConfig: appointmentService.getPricingConfig,
+  deleteAppointment: appointmentService.deleteAppointment,
 };
