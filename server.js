@@ -3,11 +3,12 @@ require("dotenv").config();
 const app = require('./src/app');
 const connectDB = require('./src/config/db');
 const scheduler = require('./src/utils/scheduler');
-
+const emailService = require('./src/services/emailService');
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   await connectDB();
+  await emailService.verifyTransporter();
   scheduler.scheduleSlotGeneration();
 
   const server = app.listen(PORT, () => {
