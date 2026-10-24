@@ -1,0 +1,21 @@
+name,phone,email,age,gender,address,city,postal_code,family_group,relationship,notes,Date of Admission
+Rajesh Sharma,9811012345,rajesh.sharma@example.com,48,M,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,110085,FAM-SHARMA,Head,Family Head; regular follow-up required,2026-10-15
+Sunita Sharma,9811012345,rajesh.sharma@example.com,44,F,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,110085,FAM-SHARMA,Spouse,Sensitive to cold weather,2026-10-15
+Aarav Sharma,9811012345,rajesh.sharma@example.com,12,M,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,110085,FAM-SHARMA,Child,Recurrent seasonal cough,2026-10-15
+Devendra Sharma,9811012348,devendra.sharma@example.com,74,M,"Flat 402, Shivalik Apartments, Rohini Sector 9",Delhi,110085,FAM-SHARMA,Parent,Knee pain since 5 years,2026-10-16
+Pooja Verma,9822023456,pooja.verma@example.com,32,F,"B-12, Green Glen Layout, Bellandur",Bengaluru,560103,FAM-VERMA,Head,Primary patient,2026-10-18
+Vikram Verma,9822023456,vikram.verma@example.com,35,M,"B-12, Green Glen Layout, Bellandur",Bengaluru,560103,FAM-VERMA,Spouse,"IT professional, desk strain",2026-10-18
+Amitabh Sengupta,9833034567,amitabh.sengupta@example.com,61,M,"78 Southern Avenue, Lake Market",Kolkata,700029,,,Recurrent blocked nose in morning,2026-10-19
+Ananya Iyer,9844045678,ananya.iyer@example.com,27,F,"14 Anna Salai, T. Nagar",Chennai,600017,,,Avoid dairy and dust,2026-10-20
+Mohammad Tariq,9855056789,mohammad.tariq@example.com,41,M,"House 56, Hazratganj Civil Lines",Lucknow,226001,FAM-KHAN,Head,Family Head; digestive complaints,2026-10-20
+Zainab Khan,9855056789,mohammad.tariq@example.com,37,F,"House 56, Hazratganj Civil Lines",Lucknow,226001,FAM-KHAN,Spouse,Family member,2026-10-20
+Harpreet Singh,9866067890,harpreet.singh@example.com,52,M,"SCO 104, Sector 35-C",Chandigarh,160035,,,Aggravated during winter,2026-10-21
+Meera Kulkarni,9877078901,meera.kulkarni@example.com,39,F,"Flat 15, Swanand Society, Kothrud",Pune,411038,,,"Sulpha allergy, homeopathy preferred",2026-10-21
+Rohan Deshmukh,9888089012,rohan.deshmukh@example.com,25,M,"Plot 22, Vashi Sector 17",Navi Mumbai,400703,,,College student,2026-10-22
+Kavita Reddy,9899090123,kavita.reddy@example.com,43,F,"Villa 8, Jubilee Hills Phase 3",Hyderabad,500033,FAM-REDDY,Head,Morning stiffness in finger joints,2026-10-22
+Suresh Reddy,9899090123,kavita.reddy@example.com,46,M,"Villa 8, Jubilee Hills Phase 3",Hyderabad,500033,FAM-REDDY,Spouse,High uric acid,2026-10-22
+Nikhil Gupta,9911001122,nikhil.gupta@example.com,33,M,"404 Vaishali Nagar, Queens Road",Jaipur,302021,,,Stress-induced bowel irregularity,2026-10-23
+Shalini Mishra,9922002233,shalini.mishra@example.com,36,F,210 Gomti Nagar Extension,Lucknow,226010,,,"Carries inhaler, prefers natural remedies",2026-10-23
+Alex DSouza,9933003344,alex.dsouza@example.com,30,M,7 Miramar Beach Road,Panaji,403001,,,Scalp and elbow lesions,2026-10-24
+Bhavna Patel,9944004455,bhavna.patel@example.com,47,F,"88 Bodakdev, SG Highway",Ahmedabad,380054,,,3mm left renal calculus,2026-10-24
+Gopalakrishnan Nair,9955005566,gopal.nair@example.com,67,M,"TC 14/120, Kowdiar Avenue",Thiruvananthapuram,695003,,,"Senior citizen, nocturia complaints",2026-10-24

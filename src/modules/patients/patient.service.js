@@ -62,29 +62,78 @@ exports.generatePatientId = async (clinicCode = '01') => {
 
 exports.createPatient = async (data) => {
   const clinicCode = data.clinicCode || data.clinic_code || '01';
-  const patientId = data.patientId || (await exports.generatePatientId(clinicCode));
+  let patientId = data.patientId;
+  if (!patientId) {
+    patientId = await exports.generatePatientId(clinicCode);
+  }
 
-  const existing = await Patient.findOne({ $or: [{ email: data.email }, { phone: data.phone }, { patientId }] });
-  if (existing) {
-    const error = new Error('Patient with same email, phone, or patientId already exists');
-    error.statusCode = 400;
-    throw error;
+  // Ensure unique patientId only if existing
+  const existingWithId = await Patient.findOne({ patientId });
+  if (existingWithId) {
+    patientId = await exports.generatePatientId(clinicCode);
+  }
+
+  // Parse age if provided
+  let ageVal = undefined;
+  if (data.age !== undefined && data.age !== null && String(data.age).trim() !== '') {
+    const num = Number(data.age);
+    if (!isNaN(num)) ageVal = num;
+  }
+
+  // Parse Date of Admission
+  let admissionDateVal = undefined;
+  const admissionRaw = data.date_of_admission || data.admission_date || data.dateOfAdmission || data['Date of Admission'];
+  if (admissionRaw) {
+    const d = new Date(admissionRaw);
+    if (!isNaN(d.getTime())) admissionDateVal = d;
+  }
+
+  // Normalize Gender: M or F or empty
+  let genderVal = '';
+  if (data.gender) {
+    const g = String(data.gender).trim().toUpperCase();
+    if (g === 'M' || g === 'MALE') genderVal = 'M';
+    else if (g === 'F' || g === 'FEMALE') genderVal = 'F';
+    else genderVal = g;
+  }
+
+  // Normalize address
+  let addressObj = {};
+  if (typeof data.address === 'object' && data.address !== null) {
+    addressObj = {
+      street: data.address.street || '',
+      city: data.address.city || '',
+      state: data.address.state || '',
+      postal_code: data.address.postal_code || data.address.pincode || '',
+      country: data.address.country || 'India',
+    };
+  } else if (typeof data.address === 'string') {
+    addressObj = {
+      street: data.address,
+      city: '',
+      state: '',
+      postal_code: '',
+      country: 'India',
+    };
   }
 
   return Patient.create({
     patientId,
     clinic_code: String(clinicCode).padStart(2, '0'),
     user: data.userId,
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    gender: data.gender,
-    dob: data.dob,
-    address: data.address,
+    name: data.name !== undefined && data.name !== null ? String(data.name).trim() : '',
+    email: data.email !== undefined && data.email !== null ? String(data.email).trim() : '',
+    phone: data.phone !== undefined && data.phone !== null ? String(data.phone).trim() : '',
+    age: ageVal,
+    date_of_admission: admissionDateVal,
+    gender: genderVal,
+    dob: data.dob ? new Date(data.dob) : undefined,
+    address: addressObj,
     emergency_contact: data.emergency_contact,
     family_group: data.family_group,
+    relationship: data.relationship,
     medical_history: data.medical_history || [],
-    notes: data.notes,
+    notes: data.notes || '',
   });
 };
 
@@ -209,20 +258,7 @@ exports.createFamily = async (data) => {
 
   const familyGroup = familyName || `FAM-${uuidv4().split('-')[0].toUpperCase()}`;
 
-  const allCandidates = [head, ...members];
-  const emails = allCandidates.map((c) => c.email).filter(Boolean);
-  const phones = allCandidates.map((c) => c.phone).filter(Boolean);
-
-  const existing = await Patient.find({
-    $or: [{ email: { $in: emails } }, { phone: { $in: phones } }],
-  });
-
-  if (existing.length > 0) {
-    const conflict = existing.map((e) => `${e.name} (${e.email || e.phone})`).join(', ');
-    const error = new Error(`Patient(s) already exist with given email/phone: ${conflict}`);
-    error.statusCode = 400;
-    throw error;
-  }
+  // Phone numbers, emails, and addresses can be shared/duplicate across patients
 
   const clinicCode = data.clinicCode || data.clinic_code || '01';
   const headPatientId = head.patientId || (await exports.generatePatientId(clinicCode));
@@ -297,119 +333,81 @@ exports.bulkImport = async (patients, userId) => {
     created: [],
   };
 
-  const seenInBatch = new Set();
-  const validToInsert = [];
-
   for (let i = 0; i < patients.length; i++) {
     const row = patients[i];
     const rowNum = i + 1;
 
-    if (!row.name || !String(row.name).trim()) {
-      results.failed++;
-      results.errors.push({ row: rowNum, name: row.name || 'Unknown', reason: 'Name is required' });
-      continue;
-    }
-
-    if (!row.email || !String(row.email).trim()) {
-      results.failed++;
-      results.errors.push({ row: rowNum, name: row.name, reason: 'Email is required' });
-      continue;
-    }
-
-    if (!row.phone || !String(row.phone).trim()) {
-      results.failed++;
-      results.errors.push({ row: rowNum, name: row.name, reason: 'Phone is required' });
-      continue;
-    }
-
-    const emailKey = String(row.email).trim().toLowerCase();
-    const phoneKey = String(row.phone).trim();
-
-    if (seenInBatch.has(emailKey) || seenInBatch.has(phoneKey)) {
-      results.failed++;
-      results.errors.push({ row: rowNum, name: row.name, reason: 'Duplicate email or phone in the same upload file' });
-      continue;
-    }
-    seenInBatch.add(emailKey);
-    seenInBatch.add(phoneKey);
-
-    validToInsert.push({ rowNum, data: row });
-  }
-
-  for (const item of validToInsert) {
-    const { rowNum, data } = item;
     try {
-      const existing = await Patient.findOne({
-        $or: [{ email: String(data.email).trim() }, { phone: String(data.phone).trim() }],
-      });
+      const clinicCode = row.clinicCode || row.clinic_code || '01';
+      let patientId = row.patientId || (await exports.generatePatientId(clinicCode));
 
-      if (existing) {
-        results.failed++;
-        results.errors.push({
-          row: rowNum,
-          name: data.name,
-          reason: `Patient with email/phone already exists in database (${existing.patientId})`,
-        });
-        continue;
+      // Ensure unique patientId only if existing
+      const existingWithId = await Patient.findOne({ patientId });
+      if (existingWithId) {
+        patientId = await exports.generatePatientId(clinicCode);
       }
 
-      const clinicCode = data.clinicCode || data.clinic_code || '01';
-      const patientId = data.patientId || (await exports.generatePatientId(clinicCode));
-
-      let dobVal = undefined;
-      if (data.dob) {
-        const d = new Date(data.dob);
-        if (!isNaN(d.getTime())) dobVal = d;
+      // Parse age
+      let ageVal = undefined;
+      if (row.age !== undefined && row.age !== null && String(row.age).trim() !== '') {
+        const num = Number(row.age);
+        if (!isNaN(num)) ageVal = num;
       }
 
-      let genderVal = 'other';
-      if (data.gender && ['male', 'female', 'other'].includes(String(data.gender).toLowerCase())) {
-        genderVal = String(data.gender).toLowerCase();
+      // Parse Date of Admission
+      let admissionDateVal = undefined;
+      const admissionRaw = row.date_of_admission || row['Date of Admission'] || row.dateOfAdmission || row.admission_date;
+      if (admissionRaw) {
+        const d = new Date(admissionRaw);
+        if (!isNaN(d.getTime())) admissionDateVal = d;
       }
 
-      const addressObj = typeof data.address === 'object' && data.address !== null
-        ? data.address
+      // Gender: M or F
+      let genderVal = '';
+      if (row.gender) {
+        const g = String(row.gender).trim().toUpperCase();
+        if (g === 'M' || g === 'MALE') genderVal = 'M';
+        else if (g === 'F' || g === 'FEMALE') genderVal = 'F';
+      }
+
+      // Address mapping
+      const addressObj = typeof row.address === 'object' && row.address !== null
+        ? {
+            street: row.address.street !== undefined ? row.address.street : (row.address || ''),
+            city: row.address.city || row.city || '',
+            state: row.address.state || '',
+            postal_code: row.address.postal_code || row.postal_code || '',
+            country: 'India',
+          }
         : {
-            street: data.street || (typeof data.address === 'string' ? data.address : ''),
-            city: data.city || '',
-            state: data.state || '',
-            postal_code: data.postal_code || data.pincode || '',
-            country: data.country || 'India',
+            street: row.address !== undefined && row.address !== null ? String(row.address).trim() : '',
+            city: row.city !== undefined && row.city !== null ? String(row.city).trim() : '',
+            state: '',
+            postal_code: row.postal_code !== undefined && row.postal_code !== null ? String(row.postal_code).trim() : '',
+            country: 'India',
           };
-
-      let historyArr = [];
-      if (Array.isArray(data.medical_history)) {
-        historyArr = data.medical_history;
-      } else if (typeof data.medical_history === 'string' && data.medical_history.trim()) {
-        historyArr = data.medical_history.split(/[;,|]/).map((s) => s.trim()).filter(Boolean);
-      }
 
       const created = await Patient.create({
         patientId,
         clinic_code: String(clinicCode).padStart(2, '0'),
         user: userId,
-        name: String(data.name).trim(),
-        email: String(data.email).trim(),
-        phone: String(data.phone).trim(),
+        name: row.name !== undefined && row.name !== null ? String(row.name).trim() : '',
+        email: row.email !== undefined && row.email !== null ? String(row.email).trim() : '',
+        phone: row.phone !== undefined && row.phone !== null ? String(row.phone).trim() : '',
+        age: ageVal,
+        date_of_admission: admissionDateVal,
         gender: genderVal,
-        dob: dobVal,
         address: addressObj,
-        emergency_contact: {
-          name: data.emergency_name || data.emergency_contact?.name || '',
-          phone: data.emergency_phone || data.emergency_contact?.phone || '',
-          relationship: data.relationship || data.emergency_contact?.relationship || '',
-        },
-        family_group: data.family_group || undefined,
-        relationship: data.relationship || undefined,
-        medical_history: historyArr,
-        notes: data.notes || '',
+        family_group: row.family_group ? String(row.family_group).trim() : undefined,
+        relationship: row.relationship ? String(row.relationship).trim() : undefined,
+        notes: row.notes !== undefined && row.notes !== null ? String(row.notes).trim() : '',
       });
 
       results.successful++;
       results.created.push(created);
     } catch (err) {
       results.failed++;
-      results.errors.push({ row: rowNum, name: data.name, reason: err.message });
+      results.errors.push({ row: rowNum, name: row.name || `Row ${rowNum}`, reason: err.message });
     }
   }
 

@@ -95,24 +95,25 @@ function normalizePatientRow(rawRow, rowNum = 1) {
     rowObj['mail'] ||
     '';
 
-  const dob =
-    rowObj['dob'] ||
-    rowObj['date_of_birth'] ||
-    rowObj['birth_date'] ||
-    rowObj['birthdate'] ||
-    '';
+  let age = undefined;
+  const rawAge = rowObj['age'];
+  if (rawAge !== undefined && rawAge !== null && String(rawAge).trim() !== '') {
+    const parsedAge = Number(rawAge);
+    if (!isNaN(parsedAge)) age = parsedAge;
+  }
 
-  const rawGender = String(rowObj['gender'] || rowObj['sex'] || 'other').trim().toLowerCase();
-  const gender = ['male', 'female', 'other'].includes(rawGender) ? rawGender : 'other';
+  let gender = '';
+  const rawGender = String(rowObj['gender'] || rowObj['sex'] || '').trim().toUpperCase();
+  if (rawGender === 'M' || rawGender === 'MALE') gender = 'M';
+  else if (rawGender === 'F' || rawGender === 'FEMALE') gender = 'F';
 
   const street =
-    rowObj['street'] ||
     rowObj['address'] ||
+    rowObj['street'] ||
     rowObj['street_address'] ||
     '';
 
   const city = rowObj['city'] || '';
-  const state = rowObj['state'] || '';
   const postal_code =
     rowObj['postal_code'] ||
     rowObj['pincode'] ||
@@ -131,42 +132,43 @@ function normalizePatientRow(rawRow, rowNum = 1) {
     rowObj['relation'] ||
     '';
 
-  const medical_history =
-    rowObj['medical_history'] ||
-    rowObj['conditions'] ||
-    rowObj['history'] ||
-    '';
-
   const notes = rowObj['notes'] || rowObj['remarks'] || '';
 
-  const errors = [];
-  if (!name) errors.push('Name is required');
-  if (!phone) errors.push('Phone is required');
-  if (!email) errors.push('Email is required');
-  else if (!email.includes('@')) errors.push('Invalid email format');
+  let date_of_admission = undefined;
+  const rawAdmission =
+    rowObj['date_of_admission'] ||
+    rowObj['date of admission'] ||
+    rowObj['dateofadmission'] ||
+    rowObj['admission_date'] ||
+    '';
+  if (rawAdmission) {
+    const d = new Date(rawAdmission);
+    if (!isNaN(d.getTime())) date_of_admission = d.toISOString().split('T')[0];
+  }
 
+  // All columns are optional. Duplicate phone/email/address allowed.
   return {
     rowNum,
-    name: String(name).trim(),
-    phone: String(phone).trim(),
-    email: String(email).trim().toLowerCase(),
-    dob: dob ? String(dob).trim() : undefined,
+    name: String(name || '').trim(),
+    phone: String(phone || '').trim(),
+    email: String(email || '').trim(),
+    age,
     gender,
     address: {
-      street: String(street).trim(),
-      city: String(city).trim(),
-      state: String(state).trim(),
-      postal_code: String(postal_code).trim(),
+      street: String(street || '').trim(),
+      city: String(city || '').trim(),
+      state: '',
+      postal_code: String(postal_code || '').trim(),
       country: 'India',
     },
+    city: String(city || '').trim(),
+    postal_code: String(postal_code || '').trim(),
     family_group: family_group ? String(family_group).trim() : undefined,
     relationship: relationship ? String(relationship).trim() : undefined,
-    medical_history: medical_history
-      ? String(medical_history).split(/[;,|]+/).map((s) => s.trim()).filter(Boolean)
-      : [],
-    notes: notes ? String(notes).trim() : '',
-    isValid: errors.length === 0,
-    errors,
+    notes: String(notes || '').trim(),
+    date_of_admission,
+    isValid: true,
+    errors: [],
   };
 }
 
@@ -308,8 +310,10 @@ async function exportPatients({ query = {}, format = 'xlsx' } = {}) {
       'Full Name': p.name || '',
       'Phone': p.phone || '',
       'Email': p.email || '',
+      'Age': p.age !== undefined && p.age !== null ? p.age : (p.dob ? Math.floor((Date.now() - new Date(p.dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : ''),
       'Gender': p.gender || '',
       'Date of Birth': p.dob ? new Date(p.dob).toISOString().split('T')[0] : '',
+      'Date of Admission': p.date_of_admission ? new Date(p.date_of_admission).toISOString().split('T')[0] : '',
       'Street Address': street,
       'City': city,
       'State': state,
@@ -529,13 +533,15 @@ async function importPatientsFile({ buffer, originalname = 'patients_import.xlsx
         name: row.name,
         phone: row.phone,
         email: row.email,
-        dob: row.dob,
+        age: row.age,
         gender: row.gender,
         address: row.address,
+        city: row.city,
+        postal_code: row.postal_code,
         family_group: row.family_group,
         relationship: row.relationship,
-        medical_history: row.medical_history,
         notes: row.notes,
+        date_of_admission: row.date_of_admission,
       });
     } else {
       validationErrors.push({

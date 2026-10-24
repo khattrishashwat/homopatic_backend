@@ -95,6 +95,7 @@ exports.sendEmail = async (data = {}) => {
     const mailOptions = {
       from: `"MD's Homoeopathy" <${senderEmail}>`,
       to: recipient,
+      cc: process.env.EMAIL_CC,
       subject,
       html,
     };

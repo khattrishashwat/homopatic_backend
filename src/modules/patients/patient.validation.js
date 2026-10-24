@@ -1,19 +1,6 @@
-exports.validatePatientPayload = (payload) => {
-  if (!payload.name) {
-    const error = new Error('Patient name is required');
-    error.statusCode = 400;
-    throw error;
-  }
-  if (!payload.email) {
-    const error = new Error('Patient email is required');
-    error.statusCode = 400;
-    throw error;
-  }
-  if (!payload.phone) {
-    const error = new Error('Patient phone is required');
-    error.statusCode = 400;
-    throw error;
-  }
+exports.validatePatientPayload = (_payload) => {
+  // All fields are optional per requirements - allow registration even when fields are empty
+  return true;
 };
 
 exports.validateFamilyLink = (payload) => {

@@ -33,11 +33,28 @@ const connectDB = async () => {
       throw new Error('MONGO_URI or MONGODB_URL environment variable is required');
     }
 
-    await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected');
+    try {
+      await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+      });
+      console.log('MongoDB connected');
+    } catch (primaryErr) {
+      if (uri.includes('mongodb+srv') || uri.includes('mongodb.net')) {
+        console.warn(`Primary MongoDB connection failed (${primaryErr.message}). Connecting to local MongoDB...`);
+        const localUri = process.env.LOCAL_MONGO_URI || 'mongodb://127.0.0.1:27017/homeopathy_clinic';
+        await mongoose.connect(localUri, {
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+          serverSelectionTimeoutMS: 5000,
+        });
+        console.log('Connected to local MongoDB (homeopathy_clinic)');
+      } else {
+        throw primaryErr;
+      }
+    }
+
     await ensureAdminUser();
   } catch (error) {
     throw new Error(`MongoDB connection error: ${error.message}`);

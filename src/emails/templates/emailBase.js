@@ -9,6 +9,7 @@ const CLINIC_INFO = {
   phone: "+91 7668610031",
   email: "drparthbhargava@mdshomoeopathy.com",
   address: "MD's Homoeopathy Clinic",
+  logoUrl: process.env.CLINIC_LOGO_URL || "https://mdshomoeopathy.com/assets/md-logo.png",
 };
 
 /**
@@ -192,8 +193,8 @@ const wrapEmail = ({ subtitle, content }) => {
             <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
               <tr>
                 <td align="center">
-                  <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50%; width: 44px; height: 44px; line-height: 44px; text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #ffffff;">
-                    ✚
+                  <div style="display: inline-block; background-color: #ffffff; border-radius: 50%; width: 68px; height: 68px; padding: 6px; box-sizing: border-box; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); margin-bottom: 12px; vertical-align: middle;">
+                    <img src="${CLINIC_INFO.logoUrl}" alt="${CLINIC_INFO.name}" width="56" height="56" style="width: 100%; height: 100%; object-fit: contain; display: block; border: 0;" />
                   </div>
                   <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; text-transform: uppercase;">
                     ${CLINIC_INFO.name}
