@@ -1,3 +1,4 @@
+const Product = require('../models/Product');
 const Review = require('../models/Review');
 const googleReviewsService = require('./googleReviewsService');
 
@@ -286,3 +287,29 @@ exports.bulkUploadReviews = async (items) => {
 
 exports.normalizeString = normalizeString;
 exports.getCompositeKey = getCompositeKey;
+
+/**
+ * Recalculate genuine average rating and count for a product based on approved reviews only
+ */
+exports.recalculateProductRating = async (slug) => {
+  if (!slug) return { total: 0, average: 0 };
+  try {
+    const approved = await Review.find({
+      type: 'product_review',
+      target_slug: slug,
+      $or: [{ status: 'approved' }, { approved: true, status: { $ne: 'rejected' } }],
+    }).select('rating').lean();
+
+    const total = approved.length;
+    const average = total === 0 ? 0 : Number((approved.reduce((s, r) => s + (Number(r.rating) || 5), 0) / total).toFixed(1));
+
+    await Product.updateOne(
+      { slug },
+      { average_rating: average, total_reviews: total }
+    );
+    return { total, average };
+  } catch (error) {
+    console.error('Error recalculating product rating:', error.message);
+    return { total: 0, average: 0 };
+  }
+};

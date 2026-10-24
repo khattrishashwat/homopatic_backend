@@ -55,10 +55,28 @@ const ReviewSchema = new mongoose.Schema(
       default: 0,
       index: true,
     },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+      index: true,
+    },
     approved: {
       type: Boolean,
-      default: true,
+      default: false,
       index: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    verified_purchase: {
+      type: Boolean,
+      default: false,
+    },
+    ip: {
+      type: String,
+      trim: true,
     },
     googleReviewId: {
       type: String,
@@ -113,7 +131,21 @@ ReviewSchema.virtual('comment').get(function () {
   return this.message;
 });
 
+ReviewSchema.pre('save', function (next) {
+  // Sync status and approved boolean
+  if (this.isModified('status')) {
+    this.approved = this.status === 'approved';
+  } else if (this.isModified('approved')) {
+    this.status = this.approved ? 'approved' : 'rejected';
+  } else if (!this.status) {
+    this.status = this.approved ? 'approved' : 'pending';
+  }
+  next();
+});
+
+ReviewSchema.index({ type: 1, target_slug: 1, status: 1, createdAt: -1 });
 ReviewSchema.index({ type: 1, target_slug: 1, createdAt: -1 });
 ReviewSchema.index({ type: 1, approved: 1, order: 1, createdAt: -1 });
+ReviewSchema.index({ type: 1, status: 1, order: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Review', ReviewSchema);

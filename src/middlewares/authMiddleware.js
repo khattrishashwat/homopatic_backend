@@ -30,3 +30,23 @@ exports.requireAdmin = async (req, res, next) => {
     next();
   });
 };
+
+exports.optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const secret = process.env.JWT_SECRET || 'fallback_secret_key_9972d5bd55a';
+    const decoded = jwt.verify(token, secret);
+    const user = await User.findById(decoded.id);
+    if (user) {
+      req.user = user;
+    }
+  } catch (error) {
+    // Ignore invalid token for optional auth
+  }
+  next();
+};

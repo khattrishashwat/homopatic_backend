@@ -54,10 +54,11 @@ const mediaAdminRoutes = require('./routes/admin/mediaAdminRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
 // ======================================================
-// SEO Routes
+// SEO Routes & Prerender Utility
 // ======================================================
 
 const seoRoutes = require('./routes/web/seoRoutes');
+const { renderHtmlWithSeo } = require('./utils/seoPrerender');
 
 const app = express();
 
@@ -79,6 +80,18 @@ app.use(
   '/uploads',
   express.static(path.join(__dirname, 'uploads'))
 );
+
+// ======================================================
+// Direct SEO Routes at Root (/sitemap.xml, /robots.txt, etc.)
+// ======================================================
+
+app.use('/', seoRoutes);
+app.use('/api/seo', seoRoutes);
+
+// 301 Redirect for canonical consistency: /products/:slug -> /shop/:slug
+app.get('/products/:slug', (req, res) => {
+  res.redirect(301, `/shop/${encodeURIComponent(req.params.slug)}`);
+});
 
 // ======================================================
 // Website API Routes
@@ -184,188 +197,93 @@ app.use('/api/category', webCategoryRoutes);
 app.use('/api/categories', webCategoryRoutes);
 
 // ======================================================
-// SEO Routes
-// ======================================================
-
-app.use('/api/seo', seoRoutes);
-
-// ======================================================
 // FRONTEND PRODUCTION BUILD PATHS
 // ======================================================
-//
-// Expected structure:
-//
-// backend/
-// └── src/
-//     ├── app.js
-//     ├── web/
-//     │   └── dist/
-//     │       ├── index.html
-//     │       └── assets/
-//     │
-//     └── admin-panel/
-//         └── dist/
-//             ├── index.html
-//             └── assets/
-//
-// ======================================================
 
-const webDistPath = path.resolve(
-  __dirname,
-  'web',
-  'dist'
-);
+const webDistPath = [
+  path.resolve(__dirname, 'web', 'dist'),
+  path.resolve(__dirname, '..', '..', 'homopathic', 'dist'),
+].find((p) => fs.existsSync(p)) || path.resolve(__dirname, 'web', 'dist');
 
-const adminDistPath = path.resolve(
-  __dirname,
-  'admin-panel',
-  'dist'
-);
+const adminDistPath = [
+  path.resolve(__dirname, 'admin-panel', 'dist'),
+  path.resolve(__dirname, '..', '..', 'admin-panel', 'dist'),
+].find((p) => fs.existsSync(p)) || path.resolve(__dirname, 'admin-panel', 'dist');
 
-const webIndexPath = path.join(
-  webDistPath,
-  'index.html'
-);
-
-const adminIndexPath = path.join(
-  adminDistPath,
-  'index.html'
-);
-
-// ======================================================
-// Frontend Build Verification
-// ======================================================
+const webIndexPath = path.join(webDistPath, 'index.html');
+const adminIndexPath = path.join(adminDistPath, 'index.html');
 
 console.log('==========================================');
 console.log('Frontend Build Configuration');
 console.log('==========================================');
-
 console.log('Web Dist Path:', webDistPath);
-
-console.log(
-  'Web index.html:',
-  webIndexPath
-);
-
-console.log(
-  'Web index exists:',
-  fs.existsSync(webIndexPath)
-);
-
-console.log(
-  'Admin Dist Path:',
-  adminDistPath
-);
-
-console.log(
-  'Admin index.html:',
-  adminIndexPath
-);
-
-console.log(
-  'Admin index exists:',
-  fs.existsSync(adminIndexPath)
-);
-
+console.log('Web index.html:', webIndexPath);
+console.log('Web index exists:', fs.existsSync(webIndexPath));
+console.log('Admin Dist Path:', adminDistPath);
+console.log('Admin index.html:', adminIndexPath);
+console.log('Admin index exists:', fs.existsSync(adminIndexPath));
 console.log('==========================================');
 
 // ======================================================
-// SERVE WEB FRONTEND AT ROOT (/)
-// ======================================================
-//
-// http://localhost:5000/
-// http://localhost:5000/about
-// http://localhost:5000/contact
-// http://localhost:5000/appointment
-//
+// SERVE WEB FRONTEND STATIC ASSETS AT ROOT (/)
 // ======================================================
 
 if (fs.existsSync(webDistPath)) {
-  app.use(
-    '/',
-    express.static(webDistPath)
-  );
+  app.use('/', express.static(webDistPath));
 } else {
-  console.error(
-    `Web frontend build not found: ${webDistPath}`
-  );
+  console.error(`Web frontend build not found: ${webDistPath}`);
 }
 
 // ======================================================
 // SERVE ADMIN PANEL AT /admin-panel
 // ======================================================
-//
-// http://localhost:5000/admin-panel
-// http://localhost:5000/admin-panel/login
-// http://localhost:5000/admin-panel/dashboard
-//
-// ======================================================
 
 if (fs.existsSync(adminDistPath)) {
-  app.use(
-    '/admin-panel',
-    express.static(adminDistPath)
-  );
+  app.use('/admin-panel', express.static(adminDistPath));
 } else {
-  console.error(
-    `Admin Panel frontend build not found: ${adminDistPath}`
-  );
+  console.error(`Admin Panel frontend build not found: ${adminDistPath}`);
 }
 
 // ======================================================
-// WEB FRONTEND SPA FALLBACK
-// ======================================================
-//
-// IMPORTANT:
-// API, uploads and admin-panel routes are excluded.
-//
-// Web:
-// /
-// /about
-// /contact
-// /appointment
-// /blogs
-// etc.
-//
+// WEB FRONTEND SPA FALLBACK WITH SEO PRERENDER
 // ======================================================
 
 app.get(
   /^\/(?!api(?:\/|$)|uploads(?:\/|$)|admin-panel(?:\/|$)).*/,
-  (req, res) => {
-    if (fs.existsSync(webIndexPath)) {
-      return res.sendFile(webIndexPath);
-    }
+  async (req, res, next) => {
+    try {
+      if (fs.existsSync(webIndexPath)) {
+        const templateHtml = await fs.promises.readFile(webIndexPath, 'utf8');
+        const { html, statusCode } = await renderHtmlWithSeo(req.path, templateHtml);
+        return res.status(statusCode).set({ 'Content-Type': 'text/html' }).send(html);
+      }
 
-    return res.status(404).send(
-      'Web frontend build not found. Please build the frontend first.'
-    );
+      return res
+        .status(404)
+        .send('Web frontend build not found. Please build the frontend first.');
+    } catch (error) {
+      console.error('Error during SEO prerender:', error);
+      if (fs.existsSync(webIndexPath)) {
+        return res.sendFile(webIndexPath);
+      }
+      next(error);
+    }
   }
 );
 
 // ======================================================
 // ADMIN PANEL SPA FALLBACK
 // ======================================================
-//
-// /admin-panel
-// /admin-panel/
-// /admin-panel/login
-// /admin-panel/dashboard
-// etc.
-//
-// ======================================================
 
-app.get(
-  /^\/admin-panel(?:\/.*)?$/,
-  (req, res) => {
-    if (fs.existsSync(adminIndexPath)) {
-      return res.sendFile(adminIndexPath);
-    }
-
-    return res.status(404).send(
-      'Admin Panel frontend build not found. Please build the frontend first.'
-    );
+app.get(/^\/admin-panel(?:\/.*)?$/, (req, res) => {
+  if (fs.existsSync(adminIndexPath)) {
+    return res.sendFile(adminIndexPath);
   }
-);
+
+  return res
+    .status(404)
+    .send('Admin Panel frontend build not found. Please build the frontend first.');
+});
 
 // ======================================================
 // Error Middleware

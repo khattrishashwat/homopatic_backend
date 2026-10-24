@@ -7,26 +7,48 @@ const googleReviewsService = require('../../services/googleReviewsService');
  */
 exports.getAllReviews = async (req, res, next) => {
   try {
-    const { type, review_type, approved, search, page = 1, limit = 20 } = req.query;
+    const {
+      type,
+      review_type,
+      status,
+      approved,
+      product,
+      target_slug,
+      search,
+      page = 1,
+      limit = 50,
+    } = req.query;
+
     const query = {};
 
     const targetType = type || review_type;
     if (targetType && targetType !== 'all') {
       query.type = targetType;
     }
-    if (approved !== undefined) {
-      query.approved = approved === 'true' || approved === true;
+
+    if (status && status !== 'all') {
+      query.status = status;
+    } else if (approved !== undefined && approved !== 'all') {
+      const isApproved = approved === 'true' || approved === true;
+      query.approved = isApproved;
     }
+
+    const filterProduct = product || target_slug;
+    if (filterProduct && filterProduct !== 'all') {
+      query.target_slug = filterProduct;
+    }
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { message: { $regex: search, $options: 'i' } },
         { target_slug: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
       ];
     }
 
     const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 20;
+    const limitNum = parseInt(limit, 10) || 50;
     const skip = (pageNum - 1) * limitNum;
 
     const [reviews, total] = await Promise.all([
@@ -69,7 +91,8 @@ exports.createReview = async (req, res, next) => {
       profileImage,
       relativeTime,
       order = 0,
-      approved = true,
+      status,
+      approved,
       googleReviewId,
       reviewDate,
       source = 'google',
@@ -85,6 +108,11 @@ exports.createReview = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Name and message are required' });
     }
 
+    const finalApproved =
+      status === 'approved' ||
+      (status === undefined && (approved === undefined || approved === 'true' || approved === true));
+    const finalStatus = status || (finalApproved ? 'approved' : 'rejected');
+
     const reviewData = {
       type: finalType,
       target_slug: target_slug || '',
@@ -96,7 +124,8 @@ exports.createReview = async (req, res, next) => {
       profileImage: profileImage || '',
       relativeTime: relativeTime || 'Recent review',
       order: Number(order) || 0,
-      approved: approved === 'true' || approved === true,
+      status: finalStatus,
+      approved: finalApproved,
       source,
     };
 
@@ -113,6 +142,10 @@ exports.createReview = async (req, res, next) => {
     const review = await Review.create(reviewData);
 
     googleReviewsService.clearCache();
+
+    if (review.type === 'product_review' && review.target_slug) {
+      await reviewService.recalculateProductRating(review.target_slug);
+    }
 
     res.status(201).json({ success: true, data: review });
   } catch (error) {
@@ -147,6 +180,7 @@ exports.updateReview = async (req, res, next) => {
       'profileImage',
       'relativeTime',
       'order',
+      'status',
       'approved',
       'googleReviewId',
       'reviewDate',
@@ -158,8 +192,12 @@ exports.updateReview = async (req, res, next) => {
       if (req.body[field] !== undefined) {
         if (field === 'rating' || field === 'order') {
           review[field] = Number(req.body[field]);
+        } else if (field === 'status') {
+          review.status = req.body[field];
+          review.approved = req.body[field] === 'approved';
         } else if (field === 'approved') {
-          review[field] = req.body[field] === 'true' || req.body[field] === true;
+          review.approved = req.body[field] === 'true' || req.body[field] === true;
+          review.status = review.approved ? 'approved' : 'rejected';
         } else if (field === 'reviewer_name' || field === 'name') {
           review.name = req.body[field];
         } else if (field === 'comment' || field === 'message') {
@@ -182,6 +220,10 @@ exports.updateReview = async (req, res, next) => {
     await review.save();
     googleReviewsService.clearCache();
 
+    if (review.type === 'product_review' && review.target_slug) {
+      await reviewService.recalculateProductRating(review.target_slug);
+    }
+
     res.json({ success: true, data: review });
   } catch (error) {
     next(error);
@@ -201,6 +243,10 @@ exports.deleteReview = async (req, res, next) => {
     }
 
     googleReviewsService.clearCache();
+
+    if (review.type === 'product_review' && review.target_slug) {
+      await reviewService.recalculateProductRating(review.target_slug);
+    }
 
     res.json({ success: true, message: 'Review deleted successfully' });
   } catch (error) {
@@ -228,4 +274,3 @@ exports.bulkUploadReviews = async (req, res, next) => {
     next(error);
   }
 };
-

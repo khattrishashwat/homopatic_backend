@@ -100,6 +100,25 @@ const ProductSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
     },
 
+    brand: {
+      type: String,
+      default: "MD's Homoeopathy",
+      trim: true,
+    },
+
+    average_rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+
+    total_reviews: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     // Status
     active: {
       type: Boolean,
