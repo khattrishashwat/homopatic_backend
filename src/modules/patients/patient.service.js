@@ -10,52 +10,31 @@ exports.generatePatientId = async (clinicCode = '01') => {
   const formattedClinicCode = String(clinicCode || '01').padStart(2, '0');
   const counterKey = `patient_clinic_${formattedClinicCode}`;
 
-  let counter = await Counter.findOneAndUpdate(
-    { key: counterKey },
-    { $inc: { seq: 1 }, $set: { updated_at: new Date() } },
-    { new: true }
-  );
+  // Fetch all existing patients for this clinic to determine the true current highest sequence
+  const existingPatients = await Patient.find({
+    clinic_code: formattedClinicCode,
+  }).select('patientId');
 
-  if (!counter) {
-    let startingSeq = 100;
-    try {
-      const existingPatients = await Patient.find({
-        patientId: new RegExp(`^MD'sH/(\\d+)/${formattedClinicCode}$`),
-      }).select('patientId');
-
-      if (existingPatients && existingPatients.length > 0) {
-        for (const p of existingPatients) {
-          const match = p.patientId.match(new RegExp(`^MD'sH/(\\d+)/${formattedClinicCode}$`));
-          if (match && match[1]) {
-            const num = parseInt(match[1], 10);
-            if (!isNaN(num) && num > startingSeq) {
-              startingSeq = num;
-            }
-          }
+  let maxSeq = 100;
+  if (existingPatients && existingPatients.length > 0) {
+    for (const p of existingPatients) {
+      const match = p.patientId?.match(new RegExp(`^MD'sH?/(\\d+)/${formattedClinicCode}$`));
+      if (match && match[1]) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
         }
-      }
-    } catch (e) {
-      // fallback
-    }
-
-    try {
-      counter = await Counter.create({
-        key: counterKey,
-        seq: startingSeq + 1,
-        updated_at: new Date(),
-      });
-    } catch (err) {
-      if (err.code === 11000) {
-        counter = await Counter.findOneAndUpdate(
-          { key: counterKey },
-          { $inc: { seq: 1 }, $set: { updated_at: new Date() } },
-          { new: true }
-        );
-      } else {
-        throw err;
       }
     }
   }
+
+  const nextSeq = maxSeq + 1;
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: counterKey },
+    { $set: { seq: nextSeq, updated_at: new Date() } },
+    { upsert: true, new: true }
+  );
 
   return `MD'sH/${counter.seq}/${formattedClinicCode}`;
 };
@@ -138,29 +117,202 @@ exports.createPatient = async (data) => {
 };
 
 exports.updatePatient = async (id, data) => {
-  const patient = await Patient.findById(id);
+  const query = id.match(/^[0-9a-fA-F]{24}$/) ? { $or: [{ _id: id }, { patientId: id }] } : { patientId: id };
+  const patient = await Patient.findOne(query);
   if (!patient) {
     const error = new Error('Patient not found');
     error.statusCode = 404;
     throw error;
   }
 
-  Object.assign(patient, data);
+  // If patientId is being changed, ensure uniqueness
+  if (data.patientId && String(data.patientId).trim() !== patient.patientId) {
+    const trimmedId = String(data.patientId).trim();
+    const existing = await Patient.findOne({ patientId: trimmedId, _id: { $ne: patient._id } });
+    if (existing) {
+      const error = new Error(`Patient ID "${trimmedId}" is already taken by another patient.`);
+      error.statusCode = 400;
+      throw error;
+    }
+    patient.patientId = trimmedId;
+  }
+
+  // Name
+  if (data.name !== undefined) {
+    patient.name = String(data.name || '').trim();
+  }
+
+  // Email
+  if (data.email !== undefined) {
+    patient.email = String(data.email || '').trim();
+  }
+
+  // Phone
+  if (data.phone !== undefined) {
+    patient.phone = String(data.phone || '').trim();
+  }
+
+  // Gender
+  if (data.gender !== undefined) {
+    const g = String(data.gender || '').trim().toUpperCase();
+    if (g === 'M' || g === 'MALE') patient.gender = 'M';
+    else if (g === 'F' || g === 'FEMALE') patient.gender = 'F';
+    else patient.gender = String(data.gender || '').trim();
+  }
+
+  // Age
+  if (data.age !== undefined) {
+    if (data.age === '' || data.age === null) {
+      patient.age = undefined;
+    } else {
+      const num = Number(data.age);
+      if (!isNaN(num)) patient.age = num;
+    }
+  }
+
+  // Date of Admission
+  if (data.date_of_admission !== undefined || data.admission_date !== undefined || data.dateOfAdmission !== undefined) {
+    const val = data.date_of_admission ?? data.admission_date ?? data.dateOfAdmission;
+    if (val) {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) patient.date_of_admission = d;
+    } else {
+      patient.date_of_admission = undefined;
+    }
+  }
+
+  // Date of Birth (DOB)
+  if (data.dob !== undefined) {
+    if (data.dob) {
+      const d = new Date(data.dob);
+      if (!isNaN(d.getTime())) patient.dob = d;
+    } else {
+      patient.dob = undefined;
+    }
+  }
+
+  // Clinic Code
+  if (data.clinic_code !== undefined || data.clinicCode !== undefined) {
+    const code = data.clinic_code ?? data.clinicCode;
+    if (code) patient.clinic_code = String(code).padStart(2, '0');
+  }
+
+  // Address
+  if (data.address !== undefined) {
+    if (typeof data.address === 'object' && data.address !== null) {
+      patient.address = {
+        street: data.address.street !== undefined ? String(data.address.street).trim() : (patient.address?.street || ''),
+        city: data.address.city !== undefined ? String(data.address.city).trim() : (patient.address?.city || ''),
+        state: data.address.state !== undefined ? String(data.address.state).trim() : (patient.address?.state || ''),
+        postal_code: data.address.postal_code !== undefined ? String(data.address.postal_code).trim() : (patient.address?.postal_code || ''),
+        country: data.address.country !== undefined ? String(data.address.country).trim() : (patient.address?.country || 'India'),
+      };
+    } else if (typeof data.address === 'string') {
+      patient.address = {
+        street: String(data.address).trim(),
+        city: patient.address?.city || '',
+        state: patient.address?.state || '',
+        postal_code: patient.address?.postal_code || '',
+        country: patient.address?.country || 'India',
+      };
+    }
+  }
+
+  // Emergency Contact
+  if (data.emergency_contact !== undefined) {
+    if (typeof data.emergency_contact === 'object' && data.emergency_contact !== null) {
+      patient.emergency_contact = {
+        name: data.emergency_contact.name !== undefined ? String(data.emergency_contact.name).trim() : (patient.emergency_contact?.name || ''),
+        phone: data.emergency_contact.phone !== undefined ? String(data.emergency_contact.phone).trim() : (patient.emergency_contact?.phone || ''),
+        relationship: data.emergency_contact.relationship !== undefined ? String(data.emergency_contact.relationship).trim() : (patient.emergency_contact?.relationship || ''),
+      };
+    }
+  }
+
+  // Family Group & Relationship
+  if (data.family_group !== undefined) {
+    patient.family_group = data.family_group ? String(data.family_group).trim() : undefined;
+  }
+  if (data.relationship !== undefined) {
+    patient.relationship = data.relationship ? String(data.relationship).trim() : undefined;
+  }
+
+  // Medical History
+  if (data.medical_history !== undefined) {
+    if (Array.isArray(data.medical_history)) {
+      patient.medical_history = data.medical_history.map((s) => String(s).trim()).filter(Boolean);
+    } else if (typeof data.medical_history === 'string') {
+      patient.medical_history = data.medical_history.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
+  // Notes
+  if (data.notes !== undefined) {
+    patient.notes = String(data.notes || '').trim();
+  }
+
+  // Active status
+  if (data.active !== undefined) {
+    patient.active = Boolean(data.active);
+  }
+
   patient.updated_at = new Date();
-  return patient.save();
+  await patient.save();
+  return patient.populate('family_members');
 };
 
 exports.deletePatient = async (id) => {
-  const patient = await Patient.findById(id);
+  const query = id.match(/^[0-9a-fA-F]{24}$/) ? { $or: [{ _id: id }, { patientId: id }] } : { patientId: id };
+  const patient = await Patient.findOne(query);
   if (!patient) {
     const error = new Error('Patient not found');
     error.statusCode = 404;
     throw error;
   }
 
-  patient.active = false;
-  patient.updated_at = new Date();
-  return patient.save();
+  // 1. Remove from family members list of other patients
+  await Patient.updateMany(
+    { family_members: patient._id },
+    { $pull: { family_members: patient._id } }
+  );
+
+  // 2. Cascade delete related records
+  await Appointment.deleteMany({ patient: patient._id });
+  await Prescription.deleteMany({ patient: patient._id });
+  await MedicalRecord.deleteMany({ patient: patient._id });
+  await Payment.deleteMany({ patient: patient._id });
+
+  // 3. Hard delete: Permanently remove patient from database
+  await Patient.deleteOne({ _id: patient._id });
+
+  // 4. Auto-sync or reset counter for this clinic
+  const clinicCode = patient.clinic_code || '01';
+  const formattedClinicCode = String(clinicCode).padStart(2, '0');
+  const counterKey = `patient_clinic_${formattedClinicCode}`;
+  const remainingPatients = await Patient.find({ clinic_code: formattedClinicCode }).select('patientId');
+
+  if (!remainingPatients || remainingPatients.length === 0) {
+    // If no patients left in DB for this clinic, delete counter so next starts at 101
+    await Counter.deleteOne({ key: counterKey });
+  } else {
+    // Sync counter to the current highest patient sequence number
+    let maxSeq = 100;
+    for (const p of remainingPatients) {
+      const match = p.patientId?.match(new RegExp(`^MD'sH?/(\\d+)/${formattedClinicCode}$`));
+      if (match && match[1]) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    }
+    await Counter.findOneAndUpdate(
+      { key: counterKey },
+      { $set: { seq: maxSeq, updated_at: new Date() } }
+    );
+  }
+
+  return { message: 'Patient permanently deleted', patientId: patient.patientId, _id: patient._id };
 };
 
 exports.getPatientById = async (id) => {
@@ -175,7 +327,7 @@ exports.getPatientById = async (id) => {
 };
 
 exports.listPatients = async (filters = {}) => {
-  const query = { active: true };
+  const query = { active: { $ne: false } };
 
   if (filters.search) {
     query.$or = [

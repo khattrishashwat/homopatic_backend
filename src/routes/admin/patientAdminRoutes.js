@@ -17,6 +17,7 @@ router.post('/bulk-import', patientController.bulkImport);
 router.get('/', patientController.listPatients);
 router.get('/:id', patientController.getPatientById);
 router.patch('/:id', patientController.updatePatient);
+router.put('/:id', patientController.updatePatient);
 router.delete('/:id', patientController.deletePatient);
 router.post('/link-family', patientController.linkFamily);
 router.get('/:id/profile', patientController.getPatientProfile);
